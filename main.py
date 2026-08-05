@@ -2,6 +2,8 @@ from core.registry import Registry
 from core.orchestrator import Orchestrator
 from agents.loader import load_agents
 from core.result_processor import ResultProcessor
+from services.voice_service import VoiceService
+
 
 
 def main():
@@ -19,6 +21,8 @@ def main():
     # Crear el orquestador
     zeus = Orchestrator(registry,processor)
 
+    voice = VoiceService()
+
     print("=== Lacerta iniciado ===")
 
     print(registry)
@@ -28,15 +32,19 @@ def main():
 
     while True:
 
-        request = input("\n> ")
+        request = voice.listen()
 
-        if request.lower() in ("exit", "quit"):
-            print("Cerrando Lacerta...")
-            break
+        print("> ", request)
+
+        if request.lower() in ["exit", "salir", "terminar"]:
+                print("Cerrando Lacerta...")
+                break
 
         response = zeus.handle(request)
 
         print(response)
+
+
 
 
 if __name__ == "__main__":

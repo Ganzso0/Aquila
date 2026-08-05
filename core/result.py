@@ -10,11 +10,13 @@ class AgentResult:
         self,
         success: bool,
         agent_name: str,
+        type:str,
         message: str,
         data: dict | None = None
     ):
         self.success = success
         self.agent_name = agent_name
+        self.type = type
         self.message = message
         self.data = data or {}
 

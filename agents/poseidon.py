@@ -43,6 +43,7 @@ class Poseidon(BaseAgent):
         return AgentResult(
         success=True,
         agent_name=self.name,
+        type="information",
         message="Saludo detectado.",
         data={
             "response": "Hola, soy Poseidon, hacen 25 grados fuera"

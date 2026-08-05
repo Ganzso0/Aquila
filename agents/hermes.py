@@ -45,6 +45,7 @@ class Hermes(BaseAgent):
         return AgentResult(
         success=True,
         agent_name=self.name,
+        type="conversation",
         message="Saludo detectado.",
         data={
             "response": "Hola, soy Hermes, el primer agente de Lacerta."
