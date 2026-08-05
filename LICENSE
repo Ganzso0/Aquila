@@ -1,0 +1,60 @@
+# Lacerta
+
+Lacerta es un asistente inteligente modular basado en agentes especializados.
+
+En lugar de que una única IA haga todo el trabajo, un orquestador (Zeus) coordina distintos agentes, cada uno especializado en una tarea concreta.
+
+## Filosofía
+
+- Arquitectura modular.
+- Agentes independientes.
+- Servicios reutilizables.
+- Memoria persistente.
+- Independencia del modelo de IA.
+- Fácil ampliación.
+
+## Arquitectura
+
+Usuario
+↓
+Zeus
+↓
+Registry
+↓
+Agentes
+↓
+Servicios
+↓
+Sistema Operativo
+
+## Estado actual
+
+- ✅ Orquestador Zeus
+- ✅ Registry dinámico
+- ✅ BaseAgent
+- ✅ Hermes
+- ✅ Poseidon
+- ✅ Hefesto
+- ✅ Apertura de aplicaciones
+- ✅ Catálogo persistente
+- ✅ Entrada por voz
+- 🚧 Memoria
+- 🚧 IA en Zeus
+
+## Roadmap
+
+- [x] Crear repositorio
+- [x] Diseñar estructura inicial
+- [x] Crear el núcleo del sistema
+- [x] Crear los primeros agentes
+- [ ] Sistema de memoria
+- [ ] IA en Zeus
+- [ ] Más agentes
+- [ ] Plugins
+
+## Documentación
+
+- docs/architecture.md
+- docs/services.md
+- docs/agents.md
+- docs/roadmap.md
