@@ -1,0 +1,51 @@
+from abc import ABC, abstractmethod
+
+
+class BaseAgent(ABC):
+    """
+    Clase base para todos los agentes de Lacerta.
+
+    Todo agente deberá heredar de esta clase e implementar
+    los métodos abstractos definidos aquí.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        capabilities: list[str],
+        priority: int = 0,
+        enabled: bool = True
+    ):
+
+        self.name = name
+        self.description = description
+        self.capabilities = capabilities
+        self.priority = priority
+        self.enabled = enabled
+
+    @property
+    def id(self) -> str:
+        return self.name.lower().replace(" ", "_")
+
+    @abstractmethod
+    def can_handle(self, request: str) -> bool:
+        """
+        Indica si este agente puede encargarse de la petición.
+        """
+        pass
+
+    @abstractmethod
+    def execute(self, request: str) -> str:
+        """
+        Ejecuta la petición y devuelve una respuesta.
+        """
+        pass
+
+    def __repr__(self):
+        return (
+            f"<{self.__class__.__name__}"
+            f"(id='{self.id}', "
+            f"name='{self.name}', "
+            f"enabled={self.enabled})>"
+        )
