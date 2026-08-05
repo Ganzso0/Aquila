@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from core.result import AgentResult
 
 
 class BaseAgent(ABC):
@@ -36,11 +37,12 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
-    def execute(self, request: str) -> str:
+    def execute(self, request: str) -> AgentResult:
         """
-        Ejecuta la petición y devuelve una respuesta.
+        Ejecuta la petición y devuelve un resultado
+        para el orquestador.
         """
-        pass
+        pass    
 
     def __repr__(self):
         return (

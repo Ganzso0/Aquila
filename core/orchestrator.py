@@ -1,4 +1,5 @@
 from core.registry import Registry
+from core.result_processor import ResultProcessor
 
 
 class Orchestrator:
@@ -10,20 +11,22 @@ class Orchestrator:
     por sí mismo.
     """
 
-    def __init__(self, registry: Registry):
-        """
-        Inicializa el orquestador con un registro de agentes.
-        """
+    def __init__(
+        self,
+        registry: Registry,
+        result_processor: ResultProcessor
+    ):
 
         self._registry = registry
+        self._result_processor = result_processor
+
 
     def handle(self, request: str) -> str:
         """
         Procesa una petición del usuario.
-
-        Busca un agente capaz de responderla y delega en él
-        la ejecución.
         """
+
+        results = []
 
         for agent in self._registry.get_all():
 
@@ -31,27 +34,19 @@ class Orchestrator:
                 continue
 
             if agent.can_handle(request):
-                return agent.execute(request)
 
-        return "No hay ningún agente disponible para procesar esta petición."
+                result = agent.execute(request)
+                results.append(result)
+
+
+        if not results:
+            return "No hay ningún agente disponible para procesar esta petición."
+
+
+        response = results[0].data.get("response")
+
+        return self._result_processor.process(results)
+
 
     def __repr__(self) -> str:
         return f"<Orchestrator(agents={len(self._registry)})>"
-
-# 1. Obtener todos los agentes
-
-# 2. Recorrerlos
-
-# 3. Ignorar los deshabilitados
-
-# 4. Preguntar si pueden encargarse
-
-# 5. Si alguno puede
-
-# ejecutar()
-
-# devolver respuesta
-
-# 6. Si nadie puede
-
-#  devolver mensaje de error
