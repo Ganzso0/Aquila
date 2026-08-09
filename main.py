@@ -32,13 +32,32 @@ def main():
 
     while True:
 
-        request = voice.listen()
+        print("\n¿Cómo quieres introducir la petición?")
+        print("[1] Escribir")
+        print("[2] Hablar")
+        print("[3] Salir")
+
+        mode = input("> ")
+
+        if mode == "1":
+            request = input("Tú: ")
+
+        elif mode == "2":
+            request = voice.listen()
+
+        elif mode == "3":
+            print("Cerrando Lacerta...")
+            break
+
+        else:
+            print("Opción no válida.")
+            continue
 
         print("> ", request)
 
         if request.lower() in ["exit", "salir", "terminar"]:
-                print("Cerrando Lacerta...")
-                break
+            print("Cerrando Lacerta...")
+            break
 
         response = zeus.handle(request)
 
