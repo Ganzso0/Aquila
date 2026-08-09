@@ -18,36 +18,32 @@ class ResultProcessor:
         results: list[AgentResult]
     ) -> str:
 
-        responses = []
+        valid_results = []
 
         for result in results:
 
             if not result.success:
                 continue
 
-            if result.requires_llm:
+            valid_results.append(result)
 
-                response = self._ai_service.generate_response(
-                    text,
-                    request,
-                    result
-                )
+        # =====================================
+        # No hay resultados
+        # =====================================
 
-                if response:
-                    responses.append(response)
+        if not valid_results:
 
-                continue
-
-            if "response" in result.data:
-
-                responses.append(
-                    result.data["response"]
-                )
-
-        if not responses:
             return "No se pudo generar una respuesta."
 
-        return "\n".join(responses)
+        # =====================================
+        # Generar UNA respuesta con Zeus
+        # =====================================
+
+        return self._ai_service.generate_response(
+            text,
+            request,
+            valid_results
+        )
 
     def __repr__(self):
         return "<ResultProcessor>"

@@ -4,57 +4,96 @@
 
 Lacerta es un asistente inteligente modular cuyo objetivo es actuar como un director de orquesta capaz de coordinar agentes especializados para resolver tareas complejas.
 
+La arquitectura separa la interpretación de las peticiones, la coordinación de agentes y la ejecución de servicios.
+
 ## Filosofía
 
-- Arquitectura modular.
-- Agentes independientes.
-- Memoria persistente.
-- Independencia del modelo de IA utilizado.
-- Fácil ampliación.
+* Arquitectura modular.
+* Agentes independientes.
+* Servicios especializados.
+* Memoria persistente como objetivo futuro.
+* Independencia del modelo de IA utilizado.
+* Fácil ampliación.
+* Separación clara de responsabilidades.
 
-## Roadmap
+---
 
-- [x] Crear repositorio
-- [x] Diseñar estructura inicial
-- [ ] Crear el núcleo del sistema
-- [ ] Crear el primer agente
-- [ ] Sistema de memoria
-- [ ] Servicios
+# Estado actual de Lacerta
 
-# Estado actual de Lacerta (Resumen)
+Lacerta ya dispone de un sistema funcional de interpretación y coordinación basado en agentes.
 
-## Objetivo del proyecto
+Actualmente puede:
 
-Lacerta es un asistente modular basado en agentes.
+* Recibir peticiones por teclado.
+* Recibir peticiones por voz.
+* Interpretar peticiones mediante Zeus.
+* Detectar diferentes tipos de intención.
+* Ejecutar agentes especializados.
+* Procesar varias peticiones dentro de una misma frase.
+* Mantener conversaciones básicas directamente mediante Zeus.
+* Consultar información meteorológica.
+* Consultar noticias.
+* Ejecutar acciones sobre el sistema.
+* Combinar los resultados de varios agentes en una única respuesta.
 
-La idea es que ningún agente lo haga todo. Cada uno se especializa en una tarea concreta mientras Zeus decide quién debe actuar.
+El modelo utilizado actualmente por Zeus es:
 
-La arquitectura busca que sea escalable y fácil de ampliar con nuevos agentes, servicios y modelos de IA.
+```text
+Qwen3 14B
+```
+
+ejecutado localmente mediante Ollama.
 
 ---
 
 # Arquitectura actual
 
-```
-Usuario
-        │
-        ▼
- Voz / Teclado
-        │
-        ▼
-      Zeus
-        │
-        ▼
-     Registry
-        │
-        ▼
-┌───────────────┬───────────────┬───────────────┐
-│ Hermes        │ Poseidon      │ Hefesto       │
-│ conversación  │ clima         │ acciones PC   │
-└───────────────┴───────────────┴───────────────┘
-        │
-        ▼
-  AgentResult
+```text
+                        Usuario
+                           │
+                    ┌──────┴──────┐
+                    │             │
+                  Voz          Teclado
+                    │             │
+                    └──────┬──────┘
+                           │
+                           ▼
+                      VoiceService
+                           │
+                           ▼
+                         Zeus
+                    (Qwen3 14B)
+                           │
+                           ▼
+                    AgentRequest
+                           │
+                           ▼
+                     Orchestrator
+                           │
+                    ┌──────┴──────┐
+                    │   Registry  │
+                    └──────┬──────┘
+                           │
+             ┌─────────────┼─────────────┐
+             │             │             │
+             ▼             ▼             ▼
+          Hermes        Poseidon       Hefesto
+          noticias       clima        acciones PC
+             │             │             │
+             ▼             ▼             ▼
+        NewsService   WeatherService  ApplicationService
+             │             │             │
+             └─────────────┼─────────────┘
+                           │
+                           ▼
+                      AgentResult
+                           │
+                           ▼
+                    ResultProcessor
+                           │
+                           ▼
+                         Zeus
+                    (respuesta final)
 ```
 
 ---
@@ -65,7 +104,7 @@ Usuario
 
 Es la aplicación principal.
 
-Inicializa todos los sistemas y mantiene el bucle principal.
+Inicializa los sistemas y mantiene el bucle principal.
 
 Actualmente puede recibir texto por teclado o voz.
 
@@ -73,19 +112,100 @@ Actualmente puede recibir texto por teclado o voz.
 
 ## Zeus
 
-Es el orquestador.
+Es el componente encargado de interpretar las peticiones y generar las respuestas finales.
 
-No sabe responder preguntas.
+Actualmente utiliza un modelo local mediante Ollama.
 
-Su única responsabilidad es:
+Sus responsabilidades son:
 
-1. Recibir una petición.
-2. Consultar el Registry.
-3. Encontrar los agentes que pueden responder.
-4. Ejecutarlos.
-5. Devolver todas las respuestas.
+1. Interpretar la petición del usuario.
+2. Determinar la intención.
+3. Determinar la acción.
+4. Extraer los parámetros necesarios.
+5. Detectar múltiples peticiones dentro de una misma entrada.
+6. Generar un `AgentRequest`.
+7. Coordinarse con el Orchestrator.
+8. Generar una respuesta natural utilizando los resultados obtenidos.
 
-Nunca debería contener lógica de clima, aplicaciones o conversación.
+Zeus no debería contener lógica específica de clima, noticias o aplicaciones.
+
+### Intenciones actuales
+
+```text
+conversation
+weather
+system
+news
+```
+
+### Acciones actuales
+
+```text
+conversation
+└── chat
+
+weather
+├── current
+└── forecast
+
+system
+├── open_application
+└── close_application
+
+news
+└── search
+```
+
+---
+
+## AgentRequest
+
+Es la estructura utilizada para representar una petición interpretada por Zeus.
+
+Contiene:
+
+```text
+intent
+action
+parameters
+context
+requests
+```
+
+Permite representar tanto peticiones simples como múltiples.
+
+Ejemplo:
+
+```text
+Usuario:
+"Dime el tiempo en Valdemoro y las noticias de Argentina"
+```
+
+Zeus puede generar dos peticiones:
+
+```text
+weather → current
+news    → search
+```
+
+La lista `requests` contiene todas las peticiones detectadas.
+
+---
+
+## Orchestrator
+
+Es el coordinador entre Zeus y los agentes.
+
+Sus responsabilidades son:
+
+1. Recibir el `AgentRequest`.
+2. Determinar qué peticiones deben ejecutarse.
+3. Buscar agentes compatibles en el `Registry`.
+4. Ejecutar los agentes correspondientes.
+5. Recoger los `AgentResult`.
+6. Pasar los resultados al `ResultProcessor`.
+
+Una petición puede activar varios agentes.
 
 ---
 
@@ -93,7 +213,7 @@ Nunca debería contener lógica de clima, aplicaciones o conversación.
 
 Contiene todos los agentes registrados.
 
-Permite que Zeus no conozca los agentes directamente.
+Permite que el Orchestrator no tenga que conocer directamente cada agente.
 
 Actualmente registra:
 
@@ -105,17 +225,17 @@ Actualmente registra:
 
 ## BaseAgent
 
-Todos los agentes heredan de aquí.
+Todos los agentes heredan de esta clase.
 
 Todos implementan:
 
-```
+```python
 can_handle()
 
 execute()
 ```
 
-Eso hace que Zeus pueda tratarlos todos exactamente igual.
+Esto permite que el Orchestrator pueda tratarlos de forma uniforme.
 
 ---
 
@@ -123,81 +243,208 @@ Eso hace que Zeus pueda tratarlos todos exactamente igual.
 
 ## Hermes
 
-Especializado en conversación.
+Especializado en noticias.
 
-Actualmente responde a saludos.
+Actualmente utiliza `NewsService` para consultar GNews.
 
-Tipo de respuesta:
+Puede realizar búsquedas como:
 
+```text
+¿Qué noticias hay sobre NVIDIA?
 ```
-conversation
+
+o:
+
+```text
+¿Cuáles son las últimas noticias de Argentina?
+```
+
+Tipo:
+
+```text
+news
+```
+
+Acción:
+
+```text
+search
 ```
 
 ---
 
 ## Poseidon
 
-Especializado en información.
+Especializado en información meteorológica.
 
-Actualmente devuelve el tiempo de forma simulada.
+Actualmente utiliza servicios de localización y meteorología para obtener información sobre el tiempo.
+
+Puede realizar consultas como:
+
+```text
+¿Qué tiempo hace ahora en Valdemoro?
+```
+
+o:
+
+```text
+¿Qué tiempo hará mañana en Barcelona?
+```
 
 Tipo:
 
+```text
+weather
 ```
-information
+
+Acciones:
+
+```text
+current
+forecast
 ```
 
 ---
 
 ## Hefesto
 
-Especializado en ejecutar acciones.
+Especializado en ejecutar acciones sobre el ordenador.
 
-Actualmente:
+Actualmente puede:
 
-* busca una aplicación
-* la abre
-* devuelve un AgentResult
+* buscar aplicaciones
+* abrir aplicaciones
+* devolver un `AgentResult`
 
 Tipo:
 
-```
-action
+```text
+system
 ```
 
-No conoce rutas ni el sistema.
+No conoce directamente las rutas de las aplicaciones.
 
-Todo eso lo delega en servicios.
+Utiliza servicios especializados para localizar y ejecutar las aplicaciones.
 
 ---
 
 # AgentResult
 
-Todos los agentes devuelven exactamente el mismo formato.
+Todos los agentes devuelven el mismo formato de resultado.
+
+Contiene:
+
+```text
+success
+agent_name
+type
+message
+data
+requires_llm
+```
+
+Esto permite que Zeus y `ResultProcessor` puedan procesar los resultados de cualquier agente de forma uniforme.
+
+---
+
+# ResultProcessor
+
+Se encarga de procesar los resultados obtenidos por los agentes.
+
+Si un agente requiere procesamiento mediante IA, los resultados se envían nuevamente a Zeus para generar una respuesta natural.
+
+Esto permite combinar varios resultados.
 
 Ejemplo:
 
-```
-success
+```text
+Usuario:
 
-agent_name
-
-type
-
-message
-
-data
+"Dime el tiempo en Valdemoro y las noticias de Argentina"
 ```
 
-Gracias a esto Zeus puede tratar igual cualquier agente.
+Resultados:
+
+```text
+Poseidon
+└── Información meteorológica
+
+Hermes
+└── Noticias
+```
+
+El `ResultProcessor` pasa ambos resultados a Zeus y Zeus genera una única respuesta.
 
 ---
 
 # Servicios
 
-Los servicios contienen la lógica reutilizable.
+Los servicios contienen la lógica reutilizable del sistema.
 
-Los agentes únicamente los utilizan.
+Los agentes utilizan estos servicios en lugar de implementar directamente la lógica.
+
+## WeatherService
+
+Responsabilidad:
+
+Consultar información meteorológica.
+
+Actualmente obtiene datos como:
+
+```text
+temperature
+wind_speed
+weather_code
+description
+```
+
+---
+
+## LocationService
+
+Responsabilidad:
+
+Convertir una ubicación proporcionada por el usuario en información geográfica.
+
+Por ejemplo:
+
+```text
+Valdemoro
+        ↓
+latitude
+longitude
+country
+```
+
+---
+
+## NewsService
+
+Responsabilidad:
+
+Consultar noticias mediante GNews.
+
+Actualmente permite realizar búsquedas por:
+
+```text
+query
+date
+category
+```
+
+Las noticias devuelven información como:
+
+```text
+title
+description
+url
+source
+published
+```
+
+La API utilizada actualmente tiene una limitación en el plan gratuito: las noticias en tiempo real tienen un retraso.
+
+---
 
 ## ApplicationService
 
@@ -208,30 +455,28 @@ Responsabilidades:
 * guardarlo
 * buscar aplicaciones
 
-No abre aplicaciones.
+No ejecuta las aplicaciones.
 
-Solo sabe encontrarlas.
+Actualmente utiliza:
 
-Actualmente:
-
-```
+```text
 cache/
     applications.json
 ```
 
 En el primer inicio:
 
-```
+```text
 escanea
-
-↓
-
+   ↓
+genera catálogo
+   ↓
 guarda catálogo
 ```
 
 En los siguientes:
 
-```
+```text
 carga catálogo
 ```
 
@@ -245,13 +490,13 @@ Ejecutar acciones del sistema.
 
 Actualmente:
 
-```
+```python
 open_application(path)
 ```
 
 No busca aplicaciones.
 
-Solo ejecuta rutas.
+Solo ejecuta las rutas proporcionadas.
 
 ---
 
@@ -261,23 +506,19 @@ Permite utilizar el micrófono.
 
 Actualmente:
 
-```
+```text
 escucha
-
-↓
-
+   ↓
 Google Speech Recognition
-
-↓
-
+   ↓
 texto
 ```
 
-Después el texto se envía a Zeus igual que si hubiese venido del teclado.
+Después el texto se envía a Zeus exactamente igual que una petición escrita.
 
-La voz no modifica Zeus ni los agentes.
+La voz no modifica la arquitectura de agentes.
 
-Solo cambia la entrada.
+Solo modifica la entrada.
 
 ---
 
@@ -285,65 +526,74 @@ Solo cambia la entrada.
 
 Ejemplo:
 
-Usuario dice:
+```text
+Usuario:
 
-```
-abre spotify
+"Dime el tiempo en Valdemoro y las noticias de Argentina"
 ```
 
 Flujo:
 
-```
-Micrófono
-
-↓
-
-VoiceService
-
-↓
-
-"abre spotify"
-
-↓
-
+```text
+Usuario
+   ↓
 Zeus
-
-↓
-
+   ↓
+Qwen3 14B
+   ↓
+AgentRequest
+   │
+   ├── Weather / Current
+   │
+   └── News / Search
+   ↓
+Orchestrator
+   ↓
 Registry
-
-↓
-
-Hefesto
-
-↓
-
-ApplicationService
-
-↓
-
-encuentra Spotify
-
-↓
-
-SystemService
-
-↓
-
-abre Spotify
-
-↓
-
+   │
+   ├── Poseidon
+   │      ↓
+   │   WeatherService
+   │
+   └── Hermes
+          ↓
+      NewsService
+   ↓
 AgentResult
-
-↓
-
+   ↓
+ResultProcessor
+   ↓
 Zeus
-
-↓
-
-Respuesta
+   ↓
+Respuesta final
 ```
+
+---
+
+# Conversación
+
+Las conversaciones normales no necesitan un agente específico.
+
+Por ejemplo:
+
+```text
+Usuario:
+
+"Hola Zeus"
+```
+
+Zeus interpreta:
+
+```text
+intent: conversation
+action: chat
+```
+
+y responde directamente utilizando el modelo de IA.
+
+Esto permite mantener la conversación separada de los agentes especializados.
+
+En el futuro se añadirá memoria para mejorar el contexto de estas conversaciones.
 
 ---
 
@@ -355,11 +605,11 @@ Cada ordenador tendrá el suyo.
 
 No debe subirse a Git.
 
-```
+```text
 cache/applications.json
 ```
 
-Debe estar ignorado por git.
+Debe estar ignorado por Git.
 
 ---
 
@@ -367,7 +617,7 @@ Debe estar ignorado por git.
 
 ## Mejorar ApplicationService
 
-Actualmente busca por coincidencia simple.
+Actualmente busca mediante coincidencias relativamente simples.
 
 Más adelante:
 
@@ -375,107 +625,157 @@ Más adelante:
 * búsqueda inteligente
 * puntuación
 * búsqueda aproximada
+* detección de aplicaciones instaladas recientemente
+
+---
+
+## Noticias
+
+Mejorar el sistema de noticias:
+
+* mejorar búsquedas
+* filtros por fecha
+* filtros por categoría
+* seleccionar mejores resultados
+* eliminar noticias duplicadas
+* mejorar el resumen de resultados
+* gestionar correctamente noticias históricas
+
+---
+
+## Meteorología
+
+Más adelante:
+
+* mejorar previsiones
+* soportar más tipos de consultas
+* mejorar interpretación de ubicaciones
+* añadir alertas meteorológicas
 
 ---
 
 ## Juegos
 
-El menú Inicio no contiene todos los juegos.
+El menú Inicio no contiene necesariamente todos los juegos.
 
 Más adelante probablemente habrá servicios específicos.
 
 Ejemplo:
 
-```
+```text
 SteamService
-
 EpicService
-
 BattleNetService
 ```
 
-En vez de meter todo dentro de ApplicationService.
+En vez de introducir toda esta lógica dentro de `ApplicationService`.
 
 ---
 
 ## Voz
 
-Actualmente siempre escucha.
+Actualmente se puede utilizar entrada por voz.
 
 En el futuro:
 
-```
+```text
 "Lacerta"
-
-↓
-
+   ↓
 activar escucha
-
-↓
-
+   ↓
 "abre Steam"
 ```
 
-o un sistema de palabra de activación.
+mediante un sistema de palabra de activación.
 
 ---
 
 ## Zeus
 
-Actualmente concatena respuestas.
+Actualmente Zeus ya utiliza un modelo de IA para:
 
-Más adelante podrá usar un modelo para:
+* interpretar intenciones
+* extraer parámetros
+* detectar múltiples peticiones
+* generar respuestas
+* combinar resultados de varios agentes
 
-* interpretar intención
-* combinar respuestas
-* generar una respuesta natural
+Más adelante:
 
-Los agentes seguirán haciendo el trabajo.
+* memoria conversacional
+* contexto persistente
+* planificación de tareas complejas
+* mejor gestión de errores
+* mayor autonomía
 
 ---
 
 ## Memoria
 
-Todavía no existe.
+Todavía no existe un sistema de memoria persistente.
 
 Más adelante Zeus podrá recordar:
 
 * preferencias
 * conversaciones
 * contexto
+* información relevante del usuario
 
 ---
 
-## Objetivo a largo plazo
+# Objetivo a largo plazo
+
+```text
+                    Usuario
+                       │
+                 Voz / Texto
+                       │
+                       ▼
+                 ┌───────────┐
+                 │   Zeus    │
+                 │    IA     │
+                 └─────┬─────┘
+                       │
+                 AgentRequest
+                       │
+                       ▼
+                ┌─────────────┐
+                │ Orchestrator│
+                └──────┬──────┘
+                       │
+                    Registry
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+       Agente 1     Agente 2     Agente 3
+          │            │            │
+          ▼            ▼            ▼
+       Servicio     Servicio     Servicio
+          │            │            │
+          └────────────┼────────────┘
+                       │
+                  AgentResult
+                       │
+                       ▼
+                ResultProcessor
+                       │
+                       ▼
+                     Zeus
+                       │
+                       ▼
+                 Usuario
+```
+
+### Principio fundamental
+
+```text
+Zeus piensa.
+El Orchestrator coordina.
+Los agentes trabajan.
+Los servicios ejecutan.
+```
+
+Cada capa debe tener una única responsabilidad.
 
 ```
-Usuario
-
-↓
-
-Voz / Texto
-
-↓
-
-Zeus (IA)
-
-↓
-
-Agentes especializados
-
-↓
-
-Servicios
-
-↓
-
-Sistema operativo
 ```
-
-Zeus pensará.
-
-Los agentes trabajarán.
-
-Los servicios ejecutarán.
-
-Cada capa tendrá una única responsabilidad.
