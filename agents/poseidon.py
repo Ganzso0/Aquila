@@ -1,4 +1,5 @@
 from agents.base_agent import BaseAgent
+from core.request import AgentRequest
 from core.result import AgentResult
 from services.weather_service import WeatherService
 from services.location_service import LocationService
@@ -23,56 +24,26 @@ class Poseidon(BaseAgent):
         self.weather = WeatherService()
         self.location = LocationService()
 
-    def can_handle(self, request: str) -> bool:
+    def can_handle(self, request: AgentRequest) -> bool:
         """
         Determina si Poseidon puede responder a la petición.
         """
 
-        keywords = [
-            "tiempo",
-            "clima",
-            "temperatura"
-        ]
+        return request.intent == "weather"
 
-        request = request.lower()
+    def execute(self, request: AgentRequest) -> AgentResult:
 
-        return any(
-            keyword in request
-            for keyword in keywords
-        )
+        # =====================================
+        # Obtener ubicación solicitada
+        # =====================================
 
-    def extract_location(self, request: str) -> str | None:
+        place = request.parameters.get("location")
 
-        request = request.lower()
+        print("Ubicación recibida:", repr(place))
 
-        phrases = [
-        "tiempo en ",
-        "tiempo hace en ",
-        "clima en ",
-        "clima hace en ",
-        "temperatura en ",
-        "temperatura hace en "
-        ]
-
-        for phrase in phrases:
-
-            if phrase in request:
-
-                place = request.split(phrase, 1)[1]
-
-                return place.strip(" ?¿!.,").title()
-
-        return None
-
-    def execute(self, request: str) -> AgentResult:
-
-        place = self.extract_location(request)
-
-        print("Lugar extraído:", repr(place))
-
-    # =====================================
-    # Obtener ubicación
-    # =====================================
+        # =====================================
+        # Obtener ubicación
+        # =====================================
 
         if place is not None:
 
@@ -85,42 +56,42 @@ class Poseidon(BaseAgent):
             print("No se indicó ubicación.")
             print("Obteniendo ubicación del dispositivo...")
 
-        location = self.location.get_device_location()
+            location = self.location.get_device_location()
 
         print("Resultado LocationService:", location)
 
-    # =====================================
-    # Comprobar ubicación
-    # =====================================
+        # =====================================
+        # Comprobar ubicación
+        # =====================================
 
         if location is None:
 
             print("ERROR: No se pudo obtener la ubicación.")
 
             return AgentResult(
-            success=False,
-            agent_name=self.name,
-            type="information",
-            message="No se pudo obtener la ubicación.",
-            data={
-                "response": (
-                    "No he podido determinar tu ubicación."
-                )
-            }
-        )
+                success=False,
+                agent_name=self.name,
+                type="information",
+                message="No se pudo obtener la ubicación.",
+                data={
+                    "response": (
+                        "No he podido determinar tu ubicación."
+                    )
+                }
+            )
 
         print("Latitud:", location["latitude"])
         print("Longitud:", location["longitude"])
 
-    # =====================================
-    # Obtener tiempo
-    # =====================================
+        # =====================================
+        # Obtener tiempo
+        # =====================================
 
         print("Consultando WeatherService...")
 
         weather = self.weather.get_weather(
-        location["latitude"],
-        location["longitude"]
+            location["latitude"],
+            location["longitude"]
         )
 
         print("Resultado WeatherService:", weather)
@@ -130,43 +101,43 @@ class Poseidon(BaseAgent):
             print("ERROR: WeatherService no devolvió datos.")
 
             return AgentResult(
-            success=False,
-            agent_name=self.name,
-            type="information",
-            message="No se pudo obtener el tiempo.",
-            data={
-                "response": (
-                    "No he podido obtener la información meteorológica."
-                )
-            }
-        )
+                success=False,
+                agent_name=self.name,
+                type="information",
+                message="No se pudo obtener el tiempo.",
+                data={
+                    "response": (
+                        "No he podido obtener la información meteorológica."
+                    )
+                }
+            )
 
-    # =====================================
-    # Preparar respuesta
-    # =====================================
+        # =====================================
+        # Preparar respuesta
+        # =====================================
 
         temperature = weather["temperature"]
         wind = weather["wind_speed"]
         description = weather["description"]
 
-        location_name = location["name"]
+        location_name = location.get("name")
 
         if location_name is None:
             location_name = "tu ubicación"
 
         return AgentResult(
-        success=True,
-        agent_name=self.name,
-        type="information",
-        message="Información meteorológica obtenida.",
-        data={
-            "response": (
-                f"En {location_name} hay "
-                f"{temperature} °C, "
-                f"{description.lower()}, "
-                f"con viento de {wind} km/h."
-            ),
-            "weather": weather,
-            "location": location
-        }
-    )
+            success=True,
+            agent_name=self.name,
+            type="information",
+            message="Información meteorológica obtenida.",
+            data={
+                "response": (
+                    f"En {location_name} hay "
+                    f"{temperature} °C, "
+                    f"{description.lower()}, "
+                    f"con viento de {wind} km/h."
+                ),
+                "weather": weather,
+                "location": location
+            }
+        )

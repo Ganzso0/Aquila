@@ -1,30 +1,43 @@
 from core.registry import Registry
+from core.request import AgentRequest
 from core.result_processor import ResultProcessor
+from services.ai_service import AIService
 
 
 class Orchestrator:
     """
     Orquestador principal de Lacerta.
 
-    Su única responsabilidad es coordinar los agentes disponibles.
-    No contiene lógica específica de ningún agente ni ejecuta tareas
-    por sí mismo.
+    Su única responsabilidad es interpretar y coordinar
+    las peticiones entre los agentes disponibles.
     """
 
     def __init__(
         self,
         registry: Registry,
-        result_processor: ResultProcessor
+        result_processor: ResultProcessor,
+        ai_service: AIService
     ):
 
         self._registry = registry
         self._result_processor = result_processor
+        self._ai_service = ai_service
 
+    def handle(self, text: str) -> str:
+        """
+        Recibe la petición del usuario, la interpreta mediante
+        Zeus/AIService y la convierte en un AgentRequest.
+        """
 
-    def handle(self, request: str) -> str:
-        """
-        Procesa una petición del usuario.
-        """
+        request: AgentRequest = self._ai_service.interpret(text)
+         
+
+        print("\n--- AGENT REQUEST ---")
+        print("Intent:", request.intent)
+        print("Action:", request.action)
+        print("Parameters:", request.parameters)
+        print("Context:", request.context)
+        print("--- END REQUEST ---\n")
 
         results = []
 
@@ -38,15 +51,15 @@ class Orchestrator:
                 result = agent.execute(request)
                 results.append(result)
 
-
         if not results:
-            return "No hay ningún agente disponible para procesar esta petición."
+            return (
+                "No hay ningún agente disponible "
+                "para procesar esta petición."
+            )
 
 
-        response = results[0].data.get("response")
 
         return self._result_processor.process(results)
-
 
     def __repr__(self) -> str:
         return f"<Orchestrator(agents={len(self._registry)})>"

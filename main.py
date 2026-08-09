@@ -3,6 +3,7 @@ from core.orchestrator import Orchestrator
 from agents.loader import load_agents
 from core.result_processor import ResultProcessor
 from services.voice_service import VoiceService
+from services.ai_service import AIService
 
 
 
@@ -18,8 +19,13 @@ def main():
 
     processor = ResultProcessor()
 
-    # Crear el orquestador
-    zeus = Orchestrator(registry,processor)
+    ai_service = AIService()
+
+    zeus = Orchestrator(
+    registry,
+    processor,
+    ai_service
+    )
 
     voice = VoiceService()
 

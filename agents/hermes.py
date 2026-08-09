@@ -1,4 +1,5 @@
 from agents.base_agent import BaseAgent
+from core.request import AgentRequest
 from core.result import AgentResult
 
 
@@ -11,6 +12,7 @@ class Hermes(BaseAgent):
     """
 
     def __init__(self):
+
         super().__init__(
             name="Hermes",
             description="Agente encargado de comunicación básica.",
@@ -21,33 +23,34 @@ class Hermes(BaseAgent):
             priority=1
         )
 
-    def can_handle(self, request: str) -> bool:
+    def can_handle(self, request: AgentRequest) -> bool:
         """
         Determina si Hermes puede responder a la petición.
         """
 
-        greetings = [
-            "hola",
-            "buenas",
-            "hey",
-            "buenos dias",
-            "buenas tardes"
-        ]
-        request = request.lower()
+        return (
+         
+            request.intent == "conversation"
+            and request.action in [
+        "chat",
+        "greeting"
+    ]
+        )
 
-        return any(greeting in request for greeting in greetings)
-
-    def execute(self, request: str) -> AgentResult:
+    def execute(self, request: AgentRequest) -> AgentResult:
         """
         Ejecuta la respuesta de Hermes.
         """
 
         return AgentResult(
-        success=True,
-        agent_name=self.name,
-        type="conversation",
-        message="Saludo detectado.",
-        data={
-            "response": "Hola, soy Hermes, el primer agente de Lacerta."
-        }
-    )
+            success=True,
+            agent_name=self.name,
+            type="conversation",
+            message="Saludo detectado.",
+            data={
+                "response": (
+                    "Hola, soy Hermes, "
+                    "el primer agente de Lacerta."
+                )
+            }
+        )

@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+
+from core.request import AgentRequest
 from core.result import AgentResult
 
 
@@ -30,19 +32,19 @@ class BaseAgent(ABC):
         return self.name.lower().replace(" ", "_")
 
     @abstractmethod
-    def can_handle(self, request: str) -> bool:
+    def can_handle(self, request: AgentRequest) -> bool:
         """
         Indica si este agente puede encargarse de la petición.
         """
         pass
 
     @abstractmethod
-    def execute(self, request: str) -> AgentResult:
+    def execute(self, request: AgentRequest) -> AgentResult:
         """
         Ejecuta la petición y devuelve un resultado
         para el orquestador.
         """
-        pass    
+        pass
 
     def __repr__(self):
         return (
