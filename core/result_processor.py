@@ -1,4 +1,5 @@
 from core.result import AgentResult
+from core.request import AgentRequest
 
 
 class ResultProcessor:
@@ -10,10 +11,12 @@ class ResultProcessor:
     def __init__(self, ai_service):
         self._ai_service = ai_service
 
-    def process(self, results: list[AgentResult]) -> str:
-        """
-        Combina los resultados de varios agentes.
-        """
+    def process(
+        self,
+        text: str,
+        request: AgentRequest,
+        results: list[AgentResult]
+    ) -> str:
 
         responses = []
 
@@ -22,18 +25,24 @@ class ResultProcessor:
             if not result.success:
                 continue
 
-            # Si el agente proporciona una respuesta directa,
-            # la utilizamos.
-            if "response" in result.data:
-                responses.append(result.data["response"])
+            if result.requires_llm:
+
+                response = self._ai_service.generate_response(
+                    text,
+                    request,
+                    result
+                )
+
+                if response:
+                    responses.append(response)
+
                 continue
 
-            # Si no hay respuesta directa, dejamos que Qwen
-            # interprete el resultado.
-            response = self._ai_service.generate_response(result)
+            if "response" in result.data:
 
-            if response:
-                responses.append(response)
+                responses.append(
+                    result.data["response"]
+                )
 
         if not responses:
             return "No se pudo generar una respuesta."

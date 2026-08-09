@@ -39,7 +39,12 @@ class Poseidon(BaseAgent):
 
         place = request.parameters.get("location")
 
+        date = request.parameters.get("date")
+
         print("Ubicación recibida:", repr(place))
+        print("Fecha recibida:", repr(date))
+
+        
 
         # =====================================
         # Obtener ubicación
@@ -90,9 +95,10 @@ class Poseidon(BaseAgent):
         print("Consultando WeatherService...")
 
         weather = self.weather.get_weather(
-            location["latitude"],
-            location["longitude"]
-        )
+    location["latitude"],
+    location["longitude"],
+    date
+)
 
         print("Resultado WeatherService:", weather)
 
@@ -116,9 +122,6 @@ class Poseidon(BaseAgent):
         # Preparar respuesta
         # =====================================
 
-        temperature = weather["temperature"]
-        wind = weather["wind_speed"]
-        description = weather["description"]
 
         location_name = location.get("name")
 
@@ -126,18 +129,13 @@ class Poseidon(BaseAgent):
             location_name = "tu ubicación"
 
         return AgentResult(
-            success=True,
-            agent_name=self.name,
-            type="information",
-            message="Información meteorológica obtenida.",
-            data={
-                "response": (
-                    f"En {location_name} hay "
-                    f"{temperature} °C, "
-                    f"{description.lower()}, "
-                    f"con viento de {wind} km/h."
-                ),
-                "weather": weather,
-                "location": location
-            }
-        )
+    success=True,
+    agent_name=self.name,
+    type="information",
+    message="Información meteorológica obtenida.",
+    data={
+        "weather": weather,
+        "location": location
+    },
+    requires_llm=True
+)

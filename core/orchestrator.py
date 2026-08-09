@@ -59,7 +59,11 @@ class Orchestrator:
 
 
 
-        return self._result_processor.process(results)
+        return self._result_processor.process(
+    text,
+    request,
+    results
+)
 
     def __repr__(self) -> str:
         return f"<Orchestrator(agents={len(self._registry)})>"

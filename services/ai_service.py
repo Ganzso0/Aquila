@@ -37,6 +37,7 @@ Intenciones disponibles:
 - conversation
 - weather
 - system
+- news
 
 Acciones disponibles:
 
@@ -51,6 +52,22 @@ system:
 - open_application
 - close_application
 
+
+news:
+
+- search
+  - query
+  - date
+  - category
+
+categories:
+
+- general
+- technology
+- sports
+- finance
+- science
+
 Ejemplos:
 
 Usuario:
@@ -62,6 +79,21 @@ Respuesta:
     "action": "chat",
     "parameters": {{}},
     "context": {{}}
+}}
+
+Usuario:
+¿Qué noticias hay hoy sobre NVIDIA?
+
+Respuesta:
+{{
+"intent": "news",
+"action": "search",
+"parameters": {{
+"query": "NVIDIA",
+"date": "today",
+"category": "technology"
+}},
+"context": {{}}
 }}
 
 Usuario:
@@ -91,6 +123,34 @@ Respuesta:
     "context": {{}}
 }}
 
+Usuario:
+¿Va a llover hoy en Valdemoro?
+
+Respuesta:
+{{
+    "intent": "weather",
+    "action": "current",
+    "parameters": {{
+        "location": "Valdemoro",
+        "date": "today"
+    }},
+    "context": {{}}
+}}
+
+Usuario:
+¿Va a llover hoy?
+
+Respuesta:
+{{
+    "intent": "weather",
+    "action": "current",
+    "parameters": {{
+        "location": null,
+        "date": "today"
+    }},
+    "context": {{}}
+}}
+
 Petición del usuario:
 {text}
 """
@@ -105,7 +165,11 @@ Petición del usuario:
                 "content": prompt
             }
         ],
-        "stream": False
+        "think": False,
+        "stream": False,
+        "options": {
+    "num_predict": 180
+}
     }
 )
 
@@ -129,7 +193,12 @@ Petición del usuario:
             parameters=parsed.get("parameters", {}),
             context=parsed.get("context", {})
         )
-    def generate_response(self, result: AgentResult) -> str:
+    def generate_response(
+        self,
+        text: str,
+        request: AgentRequest,
+        result: AgentResult
+    ) -> str:
 
         prompt = f"""
 Eres Zeus, el orquestador de Lacerta.
@@ -141,7 +210,27 @@ El agente ya ha ejecutado la acción.
 NO ejecutes ninguna acción.
 NO inventes información.
 NO expliques el proceso interno.
-Responde únicamente con el mensaje que debería recibir el usuario.
+
+Debes responder ÚNICAMENTE a la pregunta o petición
+original del usuario.
+
+IMPORTANTE:
+- Utiliza los datos del agente para responder.
+- No enumeres todos los datos disponibles si no son relevantes.
+- No menciones información que el usuario no haya preguntado,
+  salvo que sea necesaria para comprender la respuesta.
+- Si el usuario hace una pregunta concreta, responde de forma concreta.
+- Responde en español.
+- Sé natural, breve y claro.
+
+Petición original del usuario:
+{text}
+
+Interpretación de Zeus:
+Intent: {request.intent}
+Action: {request.action}
+Parameters: {json.dumps(request.parameters, ensure_ascii=False)}
+Context: {json.dumps(request.context, ensure_ascii=False)}
 
 Resultado del agente:
 
@@ -150,7 +239,7 @@ Tipo: {result.type}
 Mensaje: {result.message}
 Datos: {json.dumps(result.data, ensure_ascii=False)}
 
-Responde en español de forma natural, breve y clara.
+Genera únicamente la respuesta que debería recibir el usuario.
 """
 
         response = requests.post(
@@ -163,7 +252,13 @@ Responde en español de forma natural, breve y clara.
                     "content": prompt
                 }
             ],
-            "stream": False
+            "stream": False,
+            "think":False,
+                    "options": {
+    "num_predict": 180
+}
+
+            
         }
     )
 
