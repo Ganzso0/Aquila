@@ -1,6 +1,6 @@
 import json
 import requests
-
+from core.result import AgentResult
 from core.request import AgentRequest
 
 
@@ -129,3 +129,52 @@ Petición del usuario:
             parameters=parsed.get("parameters", {}),
             context=parsed.get("context", {})
         )
+    def generate_response(self, result: AgentResult) -> str:
+
+        prompt = f"""
+Eres Zeus, el orquestador de Lacerta.
+
+Tu función es convertir el resultado de un agente
+en una respuesta natural para el usuario.
+
+El agente ya ha ejecutado la acción.
+NO ejecutes ninguna acción.
+NO inventes información.
+NO expliques el proceso interno.
+Responde únicamente con el mensaje que debería recibir el usuario.
+
+Resultado del agente:
+
+Agente: {result.agent_name}
+Tipo: {result.type}
+Mensaje: {result.message}
+Datos: {json.dumps(result.data, ensure_ascii=False)}
+
+Responde en español de forma natural, breve y clara.
+"""
+
+        response = requests.post(
+            self.url,
+            json={
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "stream": False
+        }
+    )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        print("Tiempo total respuesta:", data.get("total_duration", 0) / 1_000_000_000)
+        print("Carga modelo respuesta:", data.get("load_duration", 0) / 1_000_000_000)
+        print("Evaluación prompt respuesta:", data.get("prompt_eval_duration", 0) / 1_000_000_000)
+        print("Generación respuesta:", data.get("eval_duration", 0) / 1_000_000_000)
+        print("Tokens generados respuesta:", data.get("eval_count", 0))
+
+        return data["message"]["content"].strip()

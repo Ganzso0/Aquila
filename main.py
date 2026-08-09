@@ -6,7 +6,6 @@ from services.voice_service import VoiceService
 from services.ai_service import AIService
 
 
-
 def main():
     """
     Punto de entrada de Lacerta.
@@ -17,14 +16,17 @@ def main():
 
     load_agents(registry)
 
-    processor = ResultProcessor()
-
+    # Crear servicio de IA
     ai_service = AIService()
 
+    # Crear procesador de resultados
+    processor = ResultProcessor(ai_service)
+
+    # Crear el orquestador
     zeus = Orchestrator(
-    registry,
-    processor,
-    ai_service
+        registry,
+        processor,
+        ai_service
     )
 
     voice = VoiceService()
@@ -68,8 +70,6 @@ def main():
         response = zeus.handle(request)
 
         print(response)
-
-
 
 
 if __name__ == "__main__":

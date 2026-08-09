@@ -29,28 +29,26 @@ class Hermes(BaseAgent):
         """
 
         return (
-         
             request.intent == "conversation"
             and request.action in [
-        "chat",
-        "greeting"
-    ]
+                "chat",
+                "greeting"
+            ]
         )
 
     def execute(self, request: AgentRequest) -> AgentResult:
         """
-        Ejecuta la respuesta de Hermes.
+        Ejecuta la petición de conversación.
         """
 
         return AgentResult(
             success=True,
             agent_name=self.name,
             type="conversation",
-            message="Saludo detectado.",
+            message="Conversación procesada.",
             data={
-                "response": (
-                    "Hola, soy Hermes, "
-                    "el primer agente de Lacerta."
-                )
+                "type": "greeting",
+                "agent": "Hermes",
+                "greeting": True
             }
         )
