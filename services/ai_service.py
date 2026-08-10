@@ -5,7 +5,6 @@ from core.request import AgentRequest
 
 
 class AIService:
-
     def __init__(self, model: str = "qwen3:14b"):
 
         self.model = model
@@ -39,6 +38,8 @@ Intenciones disponibles:
 - weather
 - system
 - news
+- favorites
+- memory
 
 Acciones disponibles:
 
@@ -53,6 +54,18 @@ system:
 - open_application
 - close_application
 
+memory
+
+- save
+- get
+- list
+- delete
+
+favorites:
+- save
+- get
+- list
+- delete
 
 news:
 
@@ -140,6 +153,7 @@ Respuesta:
     "context": {{}}
 }}
 
+
 Usuario:
 ¿Va a llover hoy?
 
@@ -153,6 +167,190 @@ Respuesta:
     }},
     "context": {{}}
 }}
+
+Usuario:
+
+Guarda en memoria que mi color favorito es amarillo.
+
+Respuesta:
+
+{{
+    "intent": "memory",
+    "action": "save",
+    "parameters": {{
+        "type": "preference",
+        "key": "favorite_color",
+        "value": "amarillo"
+}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+
+"¿Cuál es mi color favorito?"
+
+Respuesta:
+
+{{
+    "intent": "memory",
+    "action": "get",
+    "parameters": {{
+        "type": "preference",
+        "key": "favorite_color"
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+
+¿Qué cosas tienes guardadas en mi memoria?
+
+Respuesta:
+
+{{
+"intent": "memory",
+"action": "list",
+"parameters": {{}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+Borra de memoria mi color favorito.
+
+Respuesta:
+
+{{
+"intent": "memory",
+"action": "delete",
+"parameters": {{
+"type": "preference",
+"key": "favorite_color"
+}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+Quiero comprarme el Sky-Watcher 200P, guárdalo en favoritos.
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "save",
+"parameters": {{
+"category": "telescope",
+"summary": "Sky-Watcher 200P como posible próximo telescopio",
+"prompt": "Quiero comprarme el Sky-Watcher 200P, guárdalo en favoritos."
+}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+Guarda Monster Hunter World en favoritos.
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "save",
+"parameters": {{
+"category": "game",
+"summary": "Monster Hunter World",
+"prompt": "Guarda Monster Hunter World en favoritos."
+}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+¿Qué tengo guardado en favoritos?
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "list",
+"parameters": {{}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+¿Qué tengo guardado en favoritos de telescopios?
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "list",
+"parameters": {{
+"category": "telescope"
+}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+Enséñame el favorito número 2.
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "get",
+"parameters": {{
+"id": 2
+}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+Borra el favorito número 2.
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "delete",
+"parameters": {{
+"id": 2
+}},
+"context": {{}},
+"requests": []
+}}
+
+Usuario:
+
+Guarda en favoritos que mi color favorito es amarillo.
+
+Respuesta:
+
+{{
+"intent": "favorites",
+"action": "save",
+"parameters": {{
+"category": "preference",
+"summary": "Color favorito: amarillo",
+"prompt": "Guarda en favoritos que mi color favorito es amarillo."
+}},
+"context": {{}},
+"requests": []
+}}
+
+
 
 Si el usuario realiza VARIAS petieicones diferentes, No debes meterlas dentro de context. Debes utilizar "requests".
 
@@ -242,7 +440,9 @@ REGLAS IMPORTANTES
 
 1. Devuelve únicamente JSON válido. 
 
-2. No inventes parámetros. 
+2. No inventes parámetros ni valores.
+   Solo utiliza valores por defecto cuando se indiquen
+   explícitamente en estas instrucciones.
 
 3. Si no se especifica una categoría de noticias, utiliza "general". 
 
@@ -264,7 +464,88 @@ REGLAS IMPORTANTES
     "context": {{}} 
      }}
 
- 10. Si solamente existe una petición, deja "requests" como [].
+11. Si el usuario pide explícitamente guardar una información en memoria,
+    utiliza memory + save.
+
+12. Si el usuario pide explícitamente guardar algo en favoritos,
+    utiliza favorites + save.
+
+13. Si el usuario pregunta por una información que debe recuperarse
+    de la memoria, utiliza memory + get.
+
+14. Si el usuario pregunta qué información hay guardada en memoria,
+    utiliza memory + list.
+
+15. Si el usuario pide eliminar una información de la memoria,
+    utiliza memory + delete.
+
+16. Si el usuario solicita consultar un favorito concreto,
+    utiliza favorites + get.
+
+17. Si el usuario solicita listar sus favoritos,
+    utiliza favorites + list.
+
+18. La memoria puede utilizarse automáticamente para conservar información
+    personal, preferencias, intereses o datos relevantes que puedan ser
+    útiles en futuras conversaciones.
+
+    Si el usuario solicita explícitamente guardar una información en memoria,
+    DEBES utilizar memory + save.
+
+    Si el usuario no solicita explícitamente guardar la información,
+    PUEDES utilizar memory + save cuando consideres que esa información
+    es relevante y útil para futuras conversaciones.
+
+    Los favoritos NUNCA deben guardarse automáticamente.
+    Solo utiliza favorites + save cuando el usuario solicite explícitamente
+    guardar algo en favoritos.
+
+18.5. La memoria y los favoritos tienen comportamientos diferentes:
+
+    - memory:
+      Puede utilizarse de forma explícita o automática.
+
+    - favorites:
+      Solo puede utilizarse cuando el usuario lo solicite explícitamente.
+
+29. Considera especialmente relevante para la memoria:
+
+    - gustos y preferencias del usuario.
+    - hobbies e intereses.
+    - actividades que practica habitualmente.
+    - comidas o tipos de comida que le gustan.
+    - juegos, películas, música, libros o actividades que le interesan.
+    - proyectos personales.
+    - preferencias relacionadas con tecnología, compras o entretenimiento.
+    - información sobre sus objetivos o planes a largo plazo.
+
+20. "memory" y "favorites" son sistemas independientes.
+
+21. Si el usuario utiliza expresiones como "guárdalo en favoritos",
+    "añádelo a favoritos", "quiero guardarlo como favorito" o equivalentes,
+    utiliza favorites + save.
+
+22. Si el usuario utiliza expresiones como "guárdalo en memoria",
+    "recuerda esto", "acuérdate de esto" o equivalentes,
+    utiliza memory + save.
+
+23. Si el usuario pide explícitamente guardar algo en favoritos,
+    no utilices memory + save para esa petición.
+
+24. Si el usuario utiliza "guárdalo" sin especificar si se refiere
+    a memoria o favoritos, utiliza memory + save.
+
+25. Para memory + save, los parámetros deben ser:
+    "type", "key" y "value".
+
+26. Para favorites + save, los parámetros deben ser:
+    "category", "summary" y "prompt".
+
+27. Nunca utilices los parámetros "type", "key" o "value"
+    para una petición favorites + save.
+
+28. Nunca utilices los parámetros "category", "summary" o "prompt"
+    para una petición memory + save.
 
 
 Petición del usuario:
@@ -272,22 +553,15 @@ Petición del usuario:
 """
 
         response = requests.post(
-        self.url,
-        json={
-        "model": self.model,
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        "think": False,
-        "stream": False,
-        "options": {
-    "num_predict": 180
-}
-    }
-)
+            self.url,
+            json={
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "think": False,
+                "stream": False,
+                "options": {"num_predict": 180},
+            },
+        )
 
         response.raise_for_status()
 
@@ -307,8 +581,8 @@ Petición del usuario:
         elif content.startswith("```"):
             content = content[3:]
 
-        if content.endswith("```"): 
-            content = content[:-3] 
+        if content.endswith("```"):
+            content = content[:-3]
             content = content.strip()
 
         parsed = json.loads(content)
@@ -318,19 +592,27 @@ Petición del usuario:
             action=parsed["action"],
             parameters=parsed.get("parameters", {}),
             context=parsed.get("context", {}),
-            requests=parsed.get("requests", [])
+            requests=parsed.get("requests", []),
         )
+
     def generate_response(
-    self,
-    text: str,
-    request: AgentRequest,
-    results: list[AgentResult]
-        ) -> str:
+        self,
+        text: str,
+        request: AgentRequest,
+        results: list[AgentResult],
+        history: list[dict],
+    ) -> str:
+
+        history_text = ""
+
+        for message in history:
+            role = "Usuario" if message["role"] == "user" else "Zeus"
+
+            history_text += f"{role}: {message['content']}\n"
 
         results_text = ""
 
         for result in results:
-
             results_text += f"""
         Agente: {result.agent_name}
         Tipo: {result.type}
@@ -367,6 +649,14 @@ IMPORTANTE:
 - Sé natural y claro. 
 - No repitas información innecesariamente.
 
+Historial de la conversación:
+
+El siguiente texto contiene mensajes anteriores de esta misma sesión.
+Utilízalo para mantener la continuidad de la conversación y recordar
+información que el usuario ya haya proporcionado.
+
+{history_text}
+
 Petición original del usuario:
 
 {text}
@@ -380,7 +670,7 @@ Parameters:
 {json.dumps(request.parameters, ensure_ascii=False, indent=2)}
 
 Context:
-{json.dumps(request.context, ensure_ascii=False, indent =2)}
+{json.dumps(request.context, ensure_ascii=False, indent=2)}
 
 Multiple requests:
 {json.dumps(request.requests, ensure_ascii=False, indent=2)}
@@ -395,48 +685,29 @@ Genera únicamente la respuesta que debería recibir el usuario.
         response = requests.post(
             self.url,
             json={
-            "model": self.model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "stream": False,
-            "think": False,
-            "options": {
-                "num_predict": 180
-            }
-        }
-    )
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+                "think": False,
+                "options": {"num_predict": 180},
+            },
+        )
 
         response.raise_for_status()
 
         data = response.json()
 
-        print(
-        "Tiempo total respuesta:",
-        data.get("total_duration", 0) / 1_000_000_000
-    )
+        print("Tiempo total respuesta:", data.get("total_duration", 0) / 1_000_000_000)
+
+        print("Carga modelo respuesta:", data.get("load_duration", 0) / 1_000_000_000)
 
         print(
-        "Carga modelo respuesta:",
-        data.get("load_duration", 0) / 1_000_000_000
-    )
+            "Evaluación prompt respuesta:",
+            data.get("prompt_eval_duration", 0) / 1_000_000_000,
+        )
 
-        print(
-        "Evaluación prompt respuesta:",
-        data.get("prompt_eval_duration", 0) / 1_000_000_000
-    )
+        print("Generación respuesta:", data.get("eval_duration", 0) / 1_000_000_000)
 
-        print(
-        "Generación respuesta:",
-        data.get("eval_duration", 0) / 1_000_000_000
-    )
-
-        print(
-        "Tokens generados respuesta:",
-        data.get("eval_count", 0)
-    )
+        print("Tokens generados respuesta:", data.get("eval_count", 0))
 
         return data["message"]["content"].strip()

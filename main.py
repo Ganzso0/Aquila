@@ -4,6 +4,7 @@ from agents.loader import load_agents
 from core.result_processor import ResultProcessor
 from services.voice_service import VoiceService
 from services.ai_service import AIService
+from memory.memory_service import MemoryService
 
 
 def main():
@@ -22,16 +23,24 @@ def main():
     # Crear procesador de resultados
     processor = ResultProcessor(ai_service)
 
+    # Crear servicio de memoria
+    memory_service = MemoryService()
+
+    # Crear una nueva sesión
+    session_id = memory_service.create_session()
+
+    print(f"=== Lacerta iniciado | Sesión {session_id} ===")
+
     # Crear el orquestador
     zeus = Orchestrator(
         registry,
         processor,
-        ai_service
+        ai_service,
+        memory_service,
+        session_id
     )
 
     voice = VoiceService()
-
-    print("=== Lacerta iniciado ===")
 
     print(registry)
 

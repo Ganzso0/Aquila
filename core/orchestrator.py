@@ -16,14 +16,32 @@ class Orchestrator:
         self,
         registry: Registry,
         result_processor: ResultProcessor,
-        ai_service: AIService
+        ai_service: AIService,
+        memory_service,
+        session_id: int
     ):
 
         self._registry = registry
         self._result_processor = result_processor
         self._ai_service = ai_service
+        self._memory_service = memory_service
+        self._session_id = session_id
 
     def handle(self, text: str) -> str:
+
+        # =====================================
+        # Guardar petición del usuario
+        # =====================================
+
+        self._memory_service.save_message(
+            self._session_id,
+            "user",
+            text
+        )
+
+        # =====================================
+        # Interpretar petición
+        # =====================================
 
         request = self._ai_service.interpret(text)
 
@@ -139,6 +157,9 @@ class Orchestrator:
                     sub_request.intent,
                     sub_request.action
                 )
+        history = self._memory_service.get_messages(
+                self._session_id
+                    )[-20:]
 
         # =====================================
         # Conversación
@@ -152,21 +173,39 @@ class Orchestrator:
             )
         ):
 
-            return self._ai_service.generate_response(
+            response = self._ai_service.generate_response(
                 text,
                 request,
-                []
+                [],
+                history
             )
+
+            self._memory_service.save_message(
+                self._session_id,
+                "assistant",
+                response
+            )
+
+            return response
 
         # =====================================
         # Procesar resultados
         # =====================================
 
-        return self._result_processor.process(
+        response = self._result_processor.process(
             text,
             request,
-            results
+            results,
+            history
         )
+
+        self._memory_service.save_message(
+            self._session_id,
+            "assistant",
+            response
+        )
+
+        return response
 
     def __repr__(self) -> str:
         return (

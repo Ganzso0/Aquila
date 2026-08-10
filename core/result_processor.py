@@ -15,7 +15,8 @@ class ResultProcessor:
         self,
         text: str,
         request: AgentRequest,
-        results: list[AgentResult]
+        results: list[AgentResult],
+        history: list[dict]
     ) -> str:
 
         valid_results = []
@@ -42,7 +43,8 @@ class ResultProcessor:
         return self._ai_service.generate_response(
             text,
             request,
-            valid_results
+            valid_results,
+            history
         )
 
     def __repr__(self):
