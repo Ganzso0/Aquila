@@ -22,6 +22,7 @@ favorite_id_2 = memory.save_favorite(
 
 
 print("\n--- FAVORITOS GUARDADOS ---")
+print("holas")
 
 print("ID 1:", favorite_id_1)
 print("ID 2:", favorite_id_2)
