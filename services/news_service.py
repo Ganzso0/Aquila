@@ -57,11 +57,17 @@ class NewsService:
 
         date_from, date_to = self.get_date_range(date)
 
+        if not query:
+            query = category or ""
+
+        if not query:
+            return []
+
         params = {
         "apikey": self.api_key,
         "q": query,
         "lang": "es",
-        "max": 5
+        "max": 3
         }
 
         if date_from:
@@ -107,10 +113,8 @@ class NewsService:
 
             articles.append({
             "title": article.get("title"),
-            "description": article.get("description"),
             "url": article.get("url"),
-            "source": article.get("source", {}).get("name"),
-            "published": article.get("publishedAt")
+            "source": article.get("source", {}).get("name")
         })
 
         return articles

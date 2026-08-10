@@ -40,7 +40,11 @@ def main():
         session_id
     )
 
+    # Crear servicio de voz
     voice = VoiceService()
+    voice.speak("Prueba uno")
+    voice.speak("Prueba dos")
+    voice.speak("Prueba tres")
 
     print(registry)
 
@@ -57,16 +61,24 @@ def main():
         mode = input("> ")
 
         if mode == "1":
+
             request = input("Tú: ")
 
         elif mode == "2":
+
             request = voice.listen()
 
+            if not request:
+                print("No he entendido la petición.")
+                continue
+
         elif mode == "3":
+
             print("Cerrando Lacerta...")
             break
 
         else:
+
             print("Opción no válida.")
             continue
 
@@ -76,9 +88,24 @@ def main():
             print("Cerrando Lacerta...")
             break
 
+        # =====================================
+        # Zeus procesa la petición
+        # =====================================
+
         response = zeus.handle(request)
 
+        # =====================================
+        # Mostrar respuesta
+        # =====================================
+
+        print("\nZeus:")
         print(response)
+
+        # =====================================
+        # Hablar respuesta
+        # =====================================
+
+        voice.speak(response)
 
 
 if __name__ == "__main__":

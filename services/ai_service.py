@@ -559,7 +559,7 @@ Petición del usuario:
                 "messages": [{"role": "user", "content": prompt}],
                 "think": False,
                 "stream": False,
-                "options": {"num_predict": 180},
+                "options": {"num_predict": 100},
             },
         )
 
@@ -648,6 +648,12 @@ IMPORTANTE:
 - Responde en español. 
 - Sé natural y claro. 
 - No repitas información innecesariamente.
+- Sé conciso y directo.
+- No añadas explicaciones que el usuario no haya pedido.
+- Para noticias, muestra únicamente el titular, la fuente y la URL.
+- No resumas ni expliques las noticias salvo que el usuario lo solicite.
+- Para peticiones sencillas, responde brevemente.
+- Si hay varias peticiones, responde a todas sin extenderte innecesariamente.
 
 Historial de la conversación:
 
@@ -689,7 +695,7 @@ Genera únicamente la respuesta que debería recibir el usuario.
                 "messages": [{"role": "user", "content": prompt}],
                 "stream": False,
                 "think": False,
-                "options": {"num_predict": 180},
+                "options": {"num_predict": 500},
             },
         )
 

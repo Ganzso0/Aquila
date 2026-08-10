@@ -85,11 +85,9 @@ class Hermes(BaseAgent):
         for article in articles:
 
             news_for_llm.append({
-            "title": article.get("title"),
-            "description": article.get("description"),
-            "source": article.get("source"),
-            "published": article.get("published"),
-            "url": article.get("url")
+                "title": article.get("title"),
+                "url": article.get("url"),
+                "source": article.get("source")
         })
 
     # =====================================

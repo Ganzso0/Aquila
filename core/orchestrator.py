@@ -2,6 +2,8 @@ from core.registry import Registry
 from core.request import AgentRequest
 from core.result_processor import ResultProcessor
 from services.ai_service import AIService
+from core.result import AgentResult
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Orchestrator:
@@ -18,7 +20,7 @@ class Orchestrator:
         result_processor: ResultProcessor,
         ai_service: AIService,
         memory_service,
-        session_id: int
+        session_id: int,
     ):
 
         self._registry = registry
@@ -33,11 +35,7 @@ class Orchestrator:
         # Guardar petición del usuario
         # =====================================
 
-        self._memory_service.save_message(
-            self._session_id,
-            "user",
-            text
-        )
+        self._memory_service.save_message(self._session_id, "user", text)
 
         # =====================================
         # Interpretar petición
@@ -53,30 +51,13 @@ class Orchestrator:
         print("Context:", request.context)
 
         if request.requests:
-
             print("Peticiones múltiples:")
 
-            for i, sub_request in enumerate(
-                request.requests,
-                1
-            ):
-
+            for i, sub_request in enumerate(request.requests, 1):
                 print(f"  [{i}]")
-                print(
-                    "    Intent:",
-                    sub_request.get("intent")
-                )
-                print(
-                    "    Action:",
-                    sub_request.get("action")
-                )
-                print(
-                    "    Parameters:",
-                    sub_request.get(
-                        "parameters",
-                        {}
-                    )
-                )
+                print("    Intent:", sub_request.get("intent"))
+                print("    Action:", sub_request.get("action"))
+                print("    Parameters:", sub_request.get("parameters", {}))
 
         print("--- END REQUEST ---\n")
 
@@ -87,26 +68,17 @@ class Orchestrator:
         requests_to_execute = []
 
         if request.requests:
-
             for sub_request in request.requests:
-
                 requests_to_execute.append(
                     AgentRequest(
                         intent=sub_request.get("intent"),
                         action=sub_request.get("action"),
-                        parameters=sub_request.get(
-                            "parameters",
-                            {}
-                        ),
-                        context=sub_request.get(
-                            "context",
-                            {}
-                        )
+                        parameters=sub_request.get("parameters", {}),
+                        context=sub_request.get("context", {}),
                     )
                 )
 
         else:
-
             requests_to_execute.append(request)
 
         # =====================================
@@ -115,76 +87,33 @@ class Orchestrator:
 
         results = []
 
-        for sub_request in requests_to_execute:
+        with ThreadPoolExecutor(
+            max_workers=min(len(requests_to_execute),5)
+        ) as executor:
 
-            # conversation no necesita agente
-            if sub_request.intent == "conversation":
+            futures = [
+            executor.submit(
+            self._execute_request,
+            sub_request
+        )
+        for sub_request in requests_to_execute
+    ]
 
-                print(
-                    "Conversación detectada. "
-                    "Zeus responderá directamente."
-                )
+        for future in futures:
+            result = future.result()
 
-                continue
-
-            handled = False
-
-            for agent in self._registry.get_all():
-
-                if not agent.enabled:
-                    continue
-
-                if agent.can_handle(sub_request):
-
-                    print(
-                        f"Ejecutando agente: {agent.name}"
-                    )
-
-                    result = agent.execute(
-                        sub_request
-                    )
-
-                    results.append(result)
-
-                    handled = True
-
-                    break
-
-            if not handled:
-
-                print(
-                    "No se encontró agente para:",
-                    sub_request.intent,
-                    sub_request.action
-                )
-        history = self._memory_service.get_messages(
-                self._session_id
-                    )[-20:]
+            if result is not None:
+                results.append(result)
+        history = self._memory_service.get_messages(self._session_id)[-20:]
 
         # =====================================
         # Conversación
         # =====================================
 
-        if (
-            not results
-            and any(
-                r.intent == "conversation"
-                for r in requests_to_execute
-            )
-        ):
+        if not results and any(r.intent == "conversation" for r in requests_to_execute):
+            response = self._ai_service.generate_response(text, request, [], history)
 
-            response = self._ai_service.generate_response(
-                text,
-                request,
-                [],
-                history
-            )
-
-            self._memory_service.save_message(
-                self._session_id,
-                "assistant",
-                response
-            )
+            self._memory_service.save_message(self._session_id, "assistant", response)
 
             return response
 
@@ -192,22 +121,32 @@ class Orchestrator:
         # Procesar resultados
         # =====================================
 
-        response = self._result_processor.process(
-            text,
-            request,
-            results,
-            history
-        )
+        response = self._result_processor.process(text, request, results, history)
 
-        self._memory_service.save_message(
-            self._session_id,
-            "assistant",
-            response
-        )
+        self._memory_service.save_message(self._session_id, "assistant", response)
 
         return response
 
+    def _execute_request(self, request: AgentRequest) -> AgentResult | None:
+
+        # conversation no necesita agente
+        if request.intent == "conversation":
+            print("Conversación detectada. Zeus responderá directamente.")
+
+            return None
+
+        for agent in self._registry.get_all():
+            if not agent.enabled:
+             continue
+
+            if agent.can_handle(request):
+                print(f"Ejecutando agente: {agent.name}")
+
+                return agent.execute(request)
+
+        print("No se encontró agente para:", request.intent, request.action)
+
+        return None
+
     def __repr__(self) -> str:
-        return (
-            f"<Orchestrator(agents={len(self._registry)})>"
-        )
+        return f"<Orchestrator(agents={len(self._registry)})>"
