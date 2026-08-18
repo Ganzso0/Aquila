@@ -559,7 +559,7 @@ Petición del usuario:
                 "messages": [{"role": "user", "content": prompt}],
                 "think": False,
                 "stream": False,
-                "options": {"num_predict": 100},
+                "options": {"num_predict": 500},
             },
         )
 

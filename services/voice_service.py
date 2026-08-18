@@ -1,15 +1,22 @@
 
-import pyttsx3
+import io
 import re
+
+import numpy as np
+import requests
+import sounddevice as sd
+import soundfile as sf
 
 
 class VoiceService:
 
-    def __init__(self):
-
-        # Configuración del motor
-        self.rate = 175
-        self.volume = 1.0
+    def __init__(
+        self,
+        base_url="http://127.0.0.1:3030",
+        voice="zeus"
+    ):
+        self.base_url = base_url
+        self.voice = voice
 
     def speak(self, text: str):
 
@@ -20,20 +27,48 @@ class VoiceService:
 
         try:
 
-            # Crear un motor nuevo para cada respuesta
-            engine = pyttsx3.init()
+            response = requests.post(
+                f"{self.base_url}/generate",
+                files={
+                    "text": (None, clean_text),
+                    "voice": (None, self.voice),
+                },
+                timeout=120
+            )
 
-            engine.setProperty("rate", self.rate)
-            engine.setProperty("volume", self.volume)
+            response.raise_for_status()
 
-            engine.say(clean_text)
-            engine.runAndWait()
+            # El WAV permanece completamente en memoria.
+            audio_data = response.content
 
-            engine.stop()
+            # Leer directamente el WAV desde RAM.
+            audio, sample_rate = sf.read(
+                io.BytesIO(audio_data),
+                dtype="float32"
+            )
+
+            # Reproducir directamente desde RAM.
+            sd.play(
+                audio,
+                samplerate=sample_rate
+            )
+
+            # Esperar a que termine.
+            sd.wait()
+
+        except requests.RequestException as e:
+
+            print(
+                "Error conectando con el servidor TTS:",
+                e
+            )
 
         except Exception as e:
 
-            print("Error en VoiceService:", e)
+            print(
+                "Error en VoiceService:",
+                e
+            )
 
     def _clean_for_speech(self, text: str) -> str:
 
@@ -44,7 +79,6 @@ class VoiceService:
             text
         )
 
-        # Convertir Markdown:
         # [Leer más](url) -> Leer más
         text = re.sub(
             r"\[([^\]]+)\]\([^)]+\)",
@@ -102,8 +136,7 @@ class VoiceService:
         return text.strip()
 
     def listen(self):
-        # Lo dejamos preparado para implementar
-        # entrada por voz en el futuro.
+        # Preparado para implementar entrada por voz.
         pass
 
     def __repr__(self):

@@ -2,9 +2,10 @@ from core.registry import Registry
 from core.orchestrator import Orchestrator
 from agents.loader import load_agents
 from core.result_processor import ResultProcessor
-from services.voice_service import VoiceService
+# from services.voice_service import VoiceService
 from services.ai_service import AIService
 from memory.memory_service import MemoryService
+
 
 
 def main():
@@ -41,10 +42,8 @@ def main():
     )
 
     # Crear servicio de voz
-    voice = VoiceService()
-    voice.speak("Prueba uno")
-    voice.speak("Prueba dos")
-    voice.speak("Prueba tres")
+    # voice = VoiceService()
+
 
     print(registry)
 
@@ -55,7 +54,7 @@ def main():
 
         print("\n¿Cómo quieres introducir la petición?")
         print("[1] Escribir")
-        print("[2] Hablar")
+        print("[2] Hablar(cerrar)")
         print("[3] Salir")
 
         mode = input("> ")
@@ -66,11 +65,12 @@ def main():
 
         elif mode == "2":
 
-            request = voice.listen()
-
-            if not request:
-                print("No he entendido la petición.")
-                continue
+            # request = voice.listen()
+            print("cerrando")
+            # if not request:
+            #     print("No he entendido la petición.")
+            #     continue
+            break
 
         elif mode == "3":
 
@@ -105,7 +105,7 @@ def main():
         # Hablar respuesta
         # =====================================
 
-        voice.speak(response)
+        # voice.speak(response)
 
 
 if __name__ == "__main__":
