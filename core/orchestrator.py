@@ -40,8 +40,22 @@ class Orchestrator:
         # =====================================
         # Interpretar petición
         # =====================================
+        
 
-        request = self._ai_service.interpret(text)
+        request_id = self._memory_service.save_request(
+            self._session_id,
+            text
+        )
+
+        interpretation = self._ai_service.interpret(text)
+
+        self._memory_service.save_interpretation(
+            request_id,
+            interpretation
+        )
+
+        request = interpretation.request
+
 
         print("\n--- AGENT REQUEST ---")
 

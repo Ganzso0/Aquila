@@ -2,6 +2,8 @@ import json
 import requests
 from core.result import AgentResult
 from core.request import AgentRequest
+from core.interpretation_result import InterpretationResult
+
 
 
 class AIService:
@@ -583,16 +585,27 @@ Petición del usuario:
 
         if content.endswith("```"):
             content = content[:-3]
-            content = content.strip()
 
+        content = content.strip()
         parsed = json.loads(content)
 
-        return AgentRequest(
+        request = AgentRequest(
             intent=parsed["intent"],
             action=parsed["action"],
             parameters=parsed.get("parameters", {}),
             context=parsed.get("context", {}),
             requests=parsed.get("requests", []),
+        )
+
+        return InterpretationResult(
+            request=request,
+            raw_json=parsed,
+            model=self.model,
+            total_duration=data.get("total_duration", 0),
+            load_duration=data.get("load_duration", 0),
+            prompt_eval_duration=data.get("prompt_eval_duration", 0),
+            eval_duration=data.get("eval_duration", 0),
+            eval_count=data.get("eval_count", 0),
         )
 
     def generate_response(
