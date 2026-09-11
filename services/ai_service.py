@@ -63,6 +63,8 @@ Intenciones disponibles:
 - news
 - favorites
 - memory
+- music
+- astronomy
 
 Acciones disponibles:
 
@@ -112,6 +114,19 @@ music:
 - current
 - volume
 - search
+
+astronomy:
+    -object:
+        - object
+        - location
+        - date
+        - time
+
+    -sky:
+        - location
+        - date
+        - time
+
 
 Ejemplos:
 
@@ -647,6 +662,7 @@ Utiliza:
 - today 
 - tomorrow 
 - yesterday 
+
 Si el usuario proporciona una fecha concreta, conserva la fecha indicada. 
 Ejemplo:
  Usuario:
@@ -662,6 +678,90 @@ Ejemplo:
       "context": {{}}, 
       "requests": [] 
       }}
+
+Usuario:
+¿Dónde está Júpiter ahora?
+
+Respuesta:
+{{
+    "intent": "astronomy",
+    "action": "object",
+    "parameters": {{
+        "object": "jupiter",
+        "location": null,
+        "date": "today",
+        "time": "now"
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+¿Dónde estará Saturno mañana a las 23:00?
+
+Respuesta:
+{{
+    "intent": "astronomy",
+    "action": "object",
+    "parameters": {{
+        "object": "saturn",
+        "location": null,
+        "date": "tomorrow",
+        "time": "23:00:00"
+}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+¿Dónde está Marte dentro de 2 horas?
+
+Respuesta:
+{{
+    "intent": "astronomy",
+    "action": "object",
+    "parameters": {{
+        "object": "mars",
+        "location": null,
+        "date": "today",
+        "time": "in_2_hours"
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+¿Dónde está Júpiter ahora en Madrid?
+
+Respuesta:
+{{
+    "intent": "astronomy",
+    "action": "object",
+    "parameters": {{
+        "object": "jupiter",
+        "location": "Madrid",
+        "date": "today",
+        "time": "now"
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+¿Qué puedo ver en el cielo esta noche?
+
+Respuesta:
+{{
+    "intent": "astronomy",
+    "action": "sky",
+    "parameters": {{
+        "location": null,
+        "date": "today",
+        "time": "tonight"
+    }},
+    "context": {{}},
+    "requests": []
+}}
 
 ================================================== 
 REGLAS IMPORTANTES
@@ -748,7 +848,7 @@ REGLAS IMPORTANTES
     - favorites:
       Solo puede utilizarse cuando el usuario lo solicite explícitamente.
 
-29. Considera especialmente relevante para la memoria:
+19. Considera especialmente relevante para la memoria:
 
     - gustos y preferencias del usuario.
     - hobbies e intereses.
@@ -786,6 +886,54 @@ REGLAS IMPORTANTES
 
 28. Nunca utilices los parámetros "category", "summary" o "prompt"
     para una petición memory + save.
+29. Para consultas astronómicas utiliza intent "astronomy".
+
+30. Para consultar la posición de un objeto astronómico utiliza:
+    intent = "astronomy"
+    action = "object"
+
+31. Los objetos astronómicos deben utilizar nombres simples y normalizados
+    como:
+    - sun
+    - moon
+    - mercury
+    - venus
+    - mars
+    - jupiter
+    - saturn
+    - uranus
+    - neptune
+
+32. Para astronomy + object, los parámetros disponibles son:
+    - object
+    - location
+    - date
+    - time
+
+33. Si el usuario no especifica una ubicación, utiliza:
+    "location": null
+
+34. Si el usuario no especifica una fecha pero hace referencia al momento actual,
+    utiliza:
+    "date": "today"
+
+35. Si el usuario utiliza "ahora" o "en este momento", utiliza:
+    "time": "now"
+
+36. Si el usuario utiliza una expresión temporal relativa,
+    conserva dicha expresión para que Cronos la resuelva.
+
+    Ejemplos:
+    "dentro de 2 horas" → "in_2_hours"
+    "hace 2 horas" → "2_hours_ago"
+
+37. Zeus NO debe calcular ni resolver fechas u horas.
+    Debe conservar las expresiones temporales semánticas para que
+    Cronos las convierta posteriormente en una fecha y hora concretas.
+
+38. Zeus NO debe calcular la posición de los objetos astronómicos.
+    Su única función es identificar el objeto, ubicación, fecha y hora
+    solicitados.
 
 
 Historial de la conversación:

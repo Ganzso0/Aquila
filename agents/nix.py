@@ -49,11 +49,16 @@ class Nix(BaseAgent):
 
         action = request.action
 
+        date = request.parameters.get("date")
+        time = request.parameters.get("time")
+
         if action == "current_sky":
 
             data = self.astronomy.get_current_sky(
                 location["latitude"],
-                location["longitude"]
+                location["longitude"],
+                date,
+                time
             )
 
         elif action == "object":
@@ -63,7 +68,9 @@ class Nix(BaseAgent):
             data = self.astronomy.get_object(
                 object_name,
                 location["latitude"],
-                location["longitude"]
+                location["longitude"],
+                date,
+                time
             )
 
         else:
