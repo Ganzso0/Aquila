@@ -97,13 +97,21 @@ news:
   - date
   - category
 
-categories:
+-categories:
+    - general
+    - technology
+    - sports
+    - finance
+    - science
 
-- general
-- technology
-- sports
-- finance
-- science
+music:
+- play
+- pause
+- next
+- previous
+- current
+- volume
+- search
 
 Ejemplos:
 
@@ -412,6 +420,204 @@ Respuesta:
 
 }}
 
+
+Usuario:
+Pon música
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "play",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Reproduce música
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "play",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Pausa la música
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "pause",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Para la música
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "pause",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Detén la música
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "pause",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Siguiente canción
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "next",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Canción anterior
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "previous",
+    "parameters": {{}},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Pon el volumen al 50%
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "volume": 50
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Pon el volumen al máximo
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "volume": 100
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Pon el volumen al mínimo
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "volume": 0
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Sube un poco el volumen
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "change": 10
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Baja un poco el volumen
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "change": -10
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Reduce el volumen
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "change": -10
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Sube el volumen
+
+Respuesta:
+{{
+    "intent": "music",
+    "action": "volume",
+    "parameters": {{
+        "change": 10
+    }},
+    "context": {{}},
+    "requests": []
+}}
+
+Usuario:
+Pon NUEVAYOL de Bad Bunny
+
+Respuesta:
+{{
+  "intent": "music",
+  "action": "play",
+  "parameters": {{
+    "song": "NUEVAYOL",
+    "artist": "Bad Bunny"
+  }}
+}}
+
+
+
 IMPORTANTE:
 
 Cuando haya varias peticiones: 
@@ -486,6 +692,17 @@ REGLAS IMPORTANTES
     "parameters": {{}},
     "context": {{}} 
      }}
+10. Para music + volume:
+
+    - Si el usuario indica un porcentaje concreto, utiliza "volume".
+    - Si el usuario pide subir o bajar el volumen, utiliza "change".
+    - "change" representa el cambio en puntos porcentuales.
+    - "sube un poco" = 10.
+    - "baja un poco" = -10.
+    - Nunca dejes "parameters" vacío para music + volume.
+    - Si el usuario especifica una canción Y un artista,
+      debes incluir ambos parámetros:
+      song y artist.
 
 11. Si el usuario pide explícitamente guardar una información en memoria,
     utiliza memory + save.
