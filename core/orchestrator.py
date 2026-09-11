@@ -4,6 +4,7 @@ from core.result_processor import ResultProcessor
 from services.ai_service import AIService
 from core.result import AgentResult
 from concurrent.futures import ThreadPoolExecutor
+from services.cronos_service import CronosService
 
 
 class Orchestrator:
@@ -20,6 +21,7 @@ class Orchestrator:
         result_processor: ResultProcessor,
         ai_service: AIService,
         memory_service,
+        cronos_service: CronosService,
         session_id: int,
     ):
 
@@ -27,27 +29,57 @@ class Orchestrator:
         self._result_processor = result_processor
         self._ai_service = ai_service
         self._memory_service = memory_service
+        self._cronos_service = cronos_service
         self._session_id = session_id
 
     def handle(self, text: str) -> str:
 
-        # =====================================
-        # Guardar petición del usuario
-        # =====================================
+    # =====================================
+    # Recuperar historial anterior
+    # =====================================
 
-        self._memory_service.save_message(self._session_id, "user", text)
+        history_for_interpretation = (
+            self._memory_service
+            .get_messages(self._session_id)[-20:]
+        )
 
-        # =====================================
-        # Interpretar petición
-        # =====================================
-        
+        request_history = (
+            self._memory_service
+            .get_request_history(self._session_id)[-20:]
+        )
 
-        request_id = self._memory_service.save_request(
+    # =====================================
+    # Guardar petición del usuario
+    # =====================================
+
+        self._memory_service.save_message(
             self._session_id,
+            "user",
             text
         )
 
-        interpretation = self._ai_service.interpret(text)
+    # =====================================
+    # Interpretar petición
+    # =====================================
+
+        interpretation = self._ai_service.interpret(
+            text,
+            history_for_interpretation,
+            request_history
+        )
+
+        context_request_id = None
+
+        context = interpretation.raw_json.get("context", {})
+
+        if context.get("used"):
+            context_request_id = context.get("request_id")
+
+        request_id = self._memory_service.save_request(
+            self._session_id,
+            text,
+            context_request_id
+        )
 
         self._memory_service.save_interpretation(
             request_id,
@@ -94,6 +126,15 @@ class Orchestrator:
 
         else:
             requests_to_execute.append(request)
+
+        # =====================================
+        # Resolver referencias temporales
+        # =====================================
+
+        requests_to_execute = [
+            self._cronos_service.resolve(req)
+            for req in requests_to_execute
+        ]   
 
         # =====================================
         # Ejecutar agentes

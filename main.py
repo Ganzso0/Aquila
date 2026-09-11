@@ -5,6 +5,7 @@ from core.result_processor import ResultProcessor
 # from services.voice_service import VoiceService
 from services.ai_service import AIService
 from memory.memory_service import MemoryService
+from services.cronos_service import CronosService
 
 
 
@@ -29,6 +30,9 @@ def main():
     # Crear servicio de memoria
     memory_service = MemoryService()
 
+    # Crear servicio temporal
+    cronos_service = CronosService()
+
     # Crear una nueva sesión
     session_id = memory_service.create_session()
 
@@ -40,6 +44,7 @@ def main():
         processor,
         ai_service,
         memory_service,
+        cronos_service,
         session_id
     )
 

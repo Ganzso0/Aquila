@@ -12,7 +12,28 @@ class AIService:
         self.model = model
         self.url = "http://localhost:11434/api/chat"
 
-    def interpret(self, text: str) -> AgentRequest:
+    def interpret(self, text: str, history: list[dict] | None = None, request_history: list[dict] | None = None) -> InterpretationResult:
+
+
+        history = history or []
+
+        history_text = ""
+
+        for message in history:
+            role = "Usuario" if message["role"] == "user" else "Zeus"
+            history_text += f"{role}: {message['content']}\n"
+
+
+        request_history = request_history or []
+
+        request_history_text = ""
+
+        for request in request_history:
+            request_history_text += (
+            f"[request_id={request['request_id']}] "
+            f"Usuario: {request['content']}\n"
+            )
+
 
         prompt = f"""
 Eres Zeus, el orquestador de Lacerta.
@@ -549,6 +570,76 @@ REGLAS IMPORTANTES
 28. Nunca utilices los parámetros "category", "summary" o "prompt"
     para una petición memory + save.
 
+
+Historial de la conversación:
+
+{history_text if history_text else "(No hay historial previo.)"}
+
+Historial de peticiones:
+
+{request_history_text if request_history_text else "(No hay peticiones anteriores.)"}
+
+IMPORTANTE SOBRE EL HISTORIAL:
+
+- El historial pertenece a la misma conversación.
+- Puedes utilizarlo para resolver referencias ambiguas.
+- Si el usuario omite información que ya fue indicada anteriormente,
+  recupera esa información del historial.
+- No inventes información que no aparezca ni en la petición actual
+  ni en el historial.
+
+Ejemplo:
+
+Historial de peticiones:
+
+[request_id=28] Usuario: ¿Qué tiempo hará mañana en Valdemoro?
+
+Petición actual:
+
+¿Y hoy?
+
+Interpretación correcta:
+
+{{
+    "intent": "weather",
+    "action": "current",
+    "parameters": {{
+        "location": "Valdemoro",
+        "date": "today"
+    }},
+    "context": {{
+        "used": true,
+        "request_id": 28
+    }},
+    "requests": []
+}}
+
+IMPORTANTE SOBRE EL CONTEXTO ENTRE PETICIONES:
+
+El historial de peticiones contiene el request_id de cada petición anterior.
+
+Si la petición actual depende de información de una petición anterior,
+debes indicarlo dentro de "context".
+
+Si utilizas una petición anterior como contexto, utiliza:
+
+"context": {{
+    "used": true,
+    "request_id": ID_DE_LA_PETICION
+}}
+
+Si la petición actual NO depende de ninguna petición anterior, utiliza:
+
+"context": {{
+    "used": false,
+    "request_id": null
+}}
+
+Solo debes utilizar contexto cuando sea realmente necesario
+para interpretar la petición actual.
+
+No utilices "context" para almacenar otras peticiones.
+Para varias peticiones independientes utiliza "requests".
 
 Petición del usuario:
 {text}

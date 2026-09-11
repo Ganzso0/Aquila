@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime
 
 
 class WeatherService:
@@ -10,61 +11,45 @@ class WeatherService:
         date: str
     ):
 
-        url = "https://api.open-meteo.com/v1/forecast"
+        today = datetime.now().date()
+        requested_date = datetime.strptime(
+            date,
+            "%Y-%m-%d"
+        ).date()
 
         # =====================================
-        # Tiempo actual
+        # Fecha pasada → API histórica
         # =====================================
 
-        if date == "today":
+        if requested_date < today:
 
-            params = {
+            url = "https://archive-api.open-meteo.com/v1/archive"
+
+        # =====================================
+        # Hoy / futuro → API de previsión
+        # =====================================
+
+        else:
+
+            url = "https://api.open-meteo.com/v1/forecast"
+
+        params = {
             "latitude": latitude,
             "longitude": longitude,
-            "current": "temperature_2m,weather_code,wind_speed_10m",
-            "timezone": "auto"
+            "daily": (
+                "temperature_2m_max,"
+                "temperature_2m_min,"
+                "weather_code"
+            ),
+            "timezone": "auto",
+            "start_date": date,
+            "end_date": date
         }
 
-            response = requests.get(
+        response = requests.get(
             url,
             params=params
         )
-
-            response.raise_for_status()
-
-            data = response.json()
-
-            current = data["current"]
-
-            return {
-            "temperature": current["temperature_2m"],
-            "wind_speed": current["wind_speed_10m"],
-            "weather_code": current["weather_code"],
-            "description": self.get_weather_description(
-                current["weather_code"]
-            )
-        }
-
-        # =====================================
-        # Previsión
-        # =====================================
-
-        params = {
-        "latitude": latitude,
-        "longitude": longitude,
-        "daily": (
-            "temperature_2m_max,"
-            "temperature_2m_min,"
-            "weather_code"
-        ),
-        "timezone": "auto",
-        "forecast_days": 2
-    }
-
-        response = requests.get(
-        url,
-        params=params
-    )
 
         response.raise_for_status()
 
@@ -72,21 +57,16 @@ class WeatherService:
 
         daily = data["daily"]
 
-    # tomorrow = segundo elemento
-        if date == "tomorrow":
-            index = 1
-
-        else:
-            index = 0
+        weather_code = daily["weather_code"][0]
 
         return {
-        "temperature_max": daily["temperature_2m_max"][index],
-        "temperature_min": daily["temperature_2m_min"][index],
-        "weather_code": daily["weather_code"][index],
-        "description": self.get_weather_description(
-            daily["weather_code"][index]
-        )
-    }
+            "temperature_max": daily["temperature_2m_max"][0],
+            "temperature_min": daily["temperature_2m_min"][0],
+            "weather_code": weather_code,
+            "description": self.get_weather_description(
+                weather_code
+            )
+        }
 
     def get_weather_description(self, code: int) -> str:
 
