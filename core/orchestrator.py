@@ -5,6 +5,7 @@ from services.ai_service import AIService
 from core.result import AgentResult
 from concurrent.futures import ThreadPoolExecutor
 from services.cronos_service import CronosService
+from services.memory_manager import MemoryManager
 
 
 class Orchestrator:
@@ -21,6 +22,7 @@ class Orchestrator:
         result_processor: ResultProcessor,
         ai_service: AIService,
         memory_service,
+        memory_manager: MemoryManager,
         cronos_service: CronosService,
         session_id: int,
     ):
@@ -29,6 +31,7 @@ class Orchestrator:
         self._result_processor = result_processor
         self._ai_service = ai_service
         self._memory_service = memory_service
+        self._memory_manager = memory_manager
         self._cronos_service = cronos_service
         self._session_id = session_id
 
@@ -157,6 +160,11 @@ class Orchestrator:
         for future in futures:
             result = future.result()
 
+            print("DEBUG RESULT:")
+            print("Success:", result.success if result else None)
+            print("Message:", result.message if result else None)
+            print("Data:", result.data if result else None)
+
             if result is not None:
                 results.append(result)
         history = self._memory_service.get_messages(self._session_id)[-20:]
@@ -184,22 +192,34 @@ class Orchestrator:
 
     def _execute_request(self, request: AgentRequest) -> AgentResult | None:
 
-        # conversation no necesita agente
+    # conversation no necesita agente
         if request.intent == "conversation":
             print("Conversación detectada. Zeus responderá directamente.")
 
             return None
 
+    # memory y favorites son gestionados por MemoryManager
+        if request.intent in ["memory", "favorites"]:
+            print("Ejecutando MemoryManager")
+
+            return self._memory_manager.execute(request)
+
+    # El resto de peticiones se buscan en los agentes
         for agent in self._registry.get_all():
+
             if not agent.enabled:
-             continue
+                continue
 
             if agent.can_handle(request):
                 print(f"Ejecutando agente: {agent.name}")
 
                 return agent.execute(request)
 
-        print("No se encontró agente para:", request.intent, request.action)
+        print(
+            "No se encontró agente para:",
+            request.intent,
+            request.action
+        )
 
         return None
 

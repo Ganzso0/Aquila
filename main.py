@@ -6,6 +6,7 @@ from core.result_processor import ResultProcessor
 from services.ai_service import AIService
 from memory.memory_service import MemoryService
 from services.cronos_service import CronosService
+from services.memory_manager import MemoryManager
 
 
 
@@ -29,6 +30,7 @@ def main():
 
     # Crear servicio de memoria
     memory_service = MemoryService()
+    memory_manager = MemoryManager(memory_service)
 
     # Crear servicio temporal
     cronos_service = CronosService()
@@ -44,6 +46,7 @@ def main():
         processor,
         ai_service,
         memory_service,
+        memory_manager,
         cronos_service,
         session_id
     )
