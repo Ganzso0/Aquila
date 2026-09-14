@@ -18,7 +18,13 @@ class AIService:
         with open(prompt_path, "r", encoding="utf-8") as f:
                     self.prompt = f.read()
 
-    def interpret(self, text: str, history: list[dict] | None = None, request_history: list[dict] | None = None) -> InterpretationResult:
+    def interpret(
+        self,
+        text: str,
+        history: list[dict] | None = None,
+        request_history: list[dict] | None = None,
+        internal_mode: bool = False
+    ) -> InterpretationResult:
 
 
         history = history or []
@@ -40,6 +46,28 @@ class AIService:
             f"Usuario: {request['content']}\n"
             )
 
+        internal_mode_text = ""
+
+        if internal_mode:
+            internal_mode_text = """
+        MODO INTERNO LACERTA: ACTIVADO
+
+        La petición pertenece al control interno de Lacerta.
+
+        Debes utilizar obligatoriamente:
+        "intent": "lacerta"
+
+        Interpreta la solicitud utilizando únicamente las acciones disponibles
+        para el intent "lacerta".
+
+        NO utilices "memory", "conversation", "system" ni ningún otro intent.
+
+        "LACERTA" es únicamente el activador del modo interno y no forma
+        parte de la petición que debes interpretar.
+        """
+
+            
+
 
         prompt = f"""
             {self.prompt}
@@ -60,6 +88,8 @@ IMPORTANTE SOBRE EL HISTORIAL:
   recupera esa información del historial.
 - No inventes información que no aparezca ni en la petición actual
   ni en el historial.
+
+{internal_mode_text}
 
 Petición del usuario:
 {text}
@@ -110,6 +140,17 @@ Petición del usuario:
 
 
         parsed = json.loads(content)
+        if parsed.get("intent") == "lacerta":
+
+            if parsed.get("action") == "status":
+                parsed["action"] = "agent_status"
+
+                parameters = parsed.get("parameters", {})
+
+                if parameters.get("type") == "agents":
+                    parameters.pop("type")
+
+                parsed["parameters"] = parameters
 
         request = AgentRequest(
             intent=parsed["intent"],

@@ -2,7 +2,6 @@ from core.registry import Registry
 from agents.hermes import Hermes
 from agents.poseidon import Poseidon
 from agents.hefesto import Hefesto
-from agents.hipnos import Hipnos
 from agents.orfeo import Orfeo
 from agents.nix import Nix
 
@@ -15,6 +14,5 @@ def load_agents(registry: Registry) -> None:
     registry.register(Hermes())
     registry.register(Poseidon())
     registry.register(Hefesto())
-    registry.register(Hipnos())
     registry.register(Orfeo())
     registry.register(Nix())

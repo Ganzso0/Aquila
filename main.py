@@ -7,6 +7,7 @@ from services.ai_service import AIService
 from memory.memory_service import MemoryService
 from services.cronos_service import CronosService
 from services.memory_manager import MemoryManager
+from services.Aegis import AegisService
 
 
 
@@ -21,6 +22,8 @@ def main():
     registry = Registry()
 
     load_agents(registry)
+
+    aegis_service = AegisService(registry)
 
     # Crear servicio de IA
     ai_service = AIService()
@@ -48,6 +51,7 @@ def main():
         memory_service,
         memory_manager,
         cronos_service,
+        aegis_service,
         session_id
     )
 
@@ -103,6 +107,7 @@ def main():
         # =====================================
 
         response = zeus.handle(request)
+        
 
         # =====================================
         # Mostrar respuesta

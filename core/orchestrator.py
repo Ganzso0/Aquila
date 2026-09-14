@@ -6,6 +6,7 @@ from core.result import AgentResult
 from concurrent.futures import ThreadPoolExecutor
 from services.cronos_service import CronosService
 from services.memory_manager import MemoryManager
+from services.Aegis import AegisService
 
 
 class Orchestrator:
@@ -24,6 +25,7 @@ class Orchestrator:
         memory_service,
         memory_manager: MemoryManager,
         cronos_service: CronosService,
+        aegis_service: AegisService,
         session_id: int,
     ):
 
@@ -33,6 +35,7 @@ class Orchestrator:
         self._memory_service = memory_service
         self._memory_manager = memory_manager
         self._cronos_service = cronos_service
+        self._aegis_service = aegis_service
         self._session_id = session_id
 
     def handle(self, text: str) -> str:
@@ -65,11 +68,14 @@ class Orchestrator:
     # Interpretar petición
     # =====================================
 
+        internal_mode = "lacerta" in text.lower()
+
         interpretation = self._ai_service.interpret(
             text,
             history_for_interpretation,
-            request_history
-        )
+            request_history,
+            internal_mode=internal_mode
+)
 
         context_request_id = None
 
@@ -204,6 +210,74 @@ class Orchestrator:
 
             return self._memory_manager.execute(request)
 
+    # control interno del proyecto
+
+        if request.intent == "lacerta":
+                print("Ejecutando Aegis")
+
+                if request.action == "agent_status":
+
+                    agent_id = request.parameters.get("agent")
+
+                    status = self._aegis_service.get_agent_status(agent_id)
+
+                    if status is None:
+                        return AgentResult(
+                            success=False,
+                            agent_name="Aegis",
+                            type="error",
+                            message=f"No se encontró el agente: {agent_id}"
+                        )
+
+                    return AgentResult(
+                        success=True,
+                        agent_name="Aegis",
+                        type="agent_status",
+                        message="Estado de los agentes obtenido correctamente.",
+                        data=status
+                    )
+
+                if request.action == "enable_agent":
+
+                    agent_id = request.parameters.get("agent")
+
+                    success = self._aegis_service.enable_agent(agent_id)
+
+                    return AgentResult(
+                        success=success,
+                        agent_name="Aegis",
+                        type="agent_control",
+                        message=(
+                            f"Agente {agent_id} activado."
+                            if success
+                            else f"No se encontró el agente: {agent_id}"
+                        )
+                    )
+
+                if request.action == "disable_agent":
+
+                    agent_id = request.parameters.get("agent")
+
+                    success = self._aegis_service.disable_agent(agent_id)
+
+                    return AgentResult(
+                        success=success,
+                        agent_name="Aegis",
+                        type="agent_control",
+                        message=(
+                            f"Agente {agent_id} desactivado."
+                            if success
+                            else f"No se encontró el agente: {agent_id}"
+                        )
+                    )
+
+                return AgentResult(
+                    success=False,
+                    agent_name="Aegis",
+                    type="error",
+                    message=f"Acción de Lacerta no reconocida: {request.action}"
+                )
+
     # El resto de peticiones se buscan en los agentes
         for agent in self._registry.get_all():
 
@@ -213,7 +287,10 @@ class Orchestrator:
             if agent.can_handle(request):
                 print(f"Ejecutando agente: {agent.name}")
 
-                return agent.execute(request)
+                return self._aegis_service.execute_agent(
+                    agent,
+                    request
+    )
 
         print(
             "No se encontró agente para:",

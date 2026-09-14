@@ -33,6 +33,8 @@ class Poseidon(BaseAgent):
 
     def execute(self, request: AgentRequest) -> AgentResult:
 
+        # raise Exception("Fallo de prueba de Aegis")
+
         # =====================================
         # Obtener ubicación solicitada
         # =====================================
