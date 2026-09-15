@@ -8,6 +8,7 @@ from memory.memory_service import MemoryService
 from services.cronos_service import CronosService
 from services.memory_manager import MemoryManager
 from services.Aegis import AegisService
+from services.interpretationvalidator import InterpretationValidator
 
 
 
@@ -41,6 +42,9 @@ def main():
     # Crear una nueva sesión
     session_id = memory_service.create_session()
 
+    #interpretator
+    interpretation_validator = InterpretationValidator()
+
     print(f"=== Lacerta iniciado | Sesión {session_id} ===")
 
     # Crear el orquestador
@@ -52,7 +56,8 @@ def main():
         memory_manager,
         cronos_service,
         aegis_service,
-        session_id
+        session_id,
+        interpretation_validator
     )
 
     # Crear servicio de voz

@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from services.cronos_service import CronosService
 from services.memory_manager import MemoryManager
 from services.Aegis import AegisService
+from services.interpretationvalidator import InterpretationValidator
 
 
 class Orchestrator:
@@ -27,6 +28,7 @@ class Orchestrator:
         cronos_service: CronosService,
         aegis_service: AegisService,
         session_id: int,
+        interpretation_validator: InterpretationValidator,
     ):
 
         self._registry = registry
@@ -37,6 +39,7 @@ class Orchestrator:
         self._cronos_service = cronos_service
         self._aegis_service = aegis_service
         self._session_id = session_id
+        self._interpretation_validator = interpretation_validator
 
     def handle(self, text: str) -> str:
 
@@ -76,6 +79,10 @@ class Orchestrator:
             request_history,
             internal_mode=internal_mode
 )
+        if not self._interpretation_validator.validate(interpretation, text):
+            return "No he entendido bien la petición."
+
+        print("INTERPRETACIÓN VÁLIDA")
 
         context_request_id = None
 

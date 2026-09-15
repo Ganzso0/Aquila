@@ -95,6 +95,8 @@ Petición del usuario:
 {text}
 """
 
+        print("¿Prompt tiene conversation?:", "INTENT: CONVERSATION" in self.prompt)
+
         response = requests.post(
             self.url,
             json={
@@ -138,8 +140,14 @@ Petición del usuario:
 
 
 
-
         parsed = json.loads(content)
+
+        print("=== INTENCIÓN QWEN ===")
+        print("Intent:", repr(parsed.get("intent")))
+        print("Action:", repr(parsed.get("action")))
+        print("======================")
+
+        
         if parsed.get("intent") == "lacerta":
 
             if parsed.get("action") == "status":

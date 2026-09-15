@@ -104,11 +104,22 @@ class ApplicationService:
 
     def find_application(self, request: str):
 
-        request = request.lower()
+        request = self.normalize_name(request)
 
         for key, application in self.applications.items():
 
-            if key in request:
+            normalized_key = self.normalize_name(key)
+
+            if normalized_key == request:
                 return application
 
         return None
+
+    def normalize_name(self, name: str) -> str:
+        return (
+            name
+            .strip()
+            .lower()
+            .replace("_", " ")
+            .replace("-", " ")
+        )
