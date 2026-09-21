@@ -1,14 +1,14 @@
-from core.registry import Registry
-from core.orchestrator import Orchestrator
-from agents.loader import load_agents
-from core.result_processor import ResultProcessor
+from core.execution.registry import Registry
+from orchestration.Zeus.orchestrator import Orchestrator
+from core.execution.loader import load_agents
+from core.execution.result_processor import ResultProcessor
 # from services.voice_service import VoiceService
-from services.ai_service import AIService
-from memory.memory_service import MemoryService
-from services.cronos_service import CronosService
-from services.memory_manager import MemoryManager
-from services.Aegis import AegisService
-from services.interpretationvalidator import InterpretationValidator
+from core.ai.ai_service import AIService
+from services.internal.memory.memory_service import MemoryService
+from services.internal.Cronos.cronos_service import CronosService
+from services.internal.memory.memory_manager import MemoryManager
+from supervision.Aegis.Aegis import AegisService
+from core.execution.interpretationvalidator import InterpretationValidator
 
 
 

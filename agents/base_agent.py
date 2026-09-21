@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from core.request import AgentRequest
-from core.result import AgentResult
+from core.models.request import AgentRequest
+from core.models.result import AgentResult
 
 
 class BaseAgent(ABC):
