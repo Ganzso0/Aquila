@@ -9,7 +9,10 @@ from services.internal.Cronos.cronos_service import CronosService
 from services.internal.memory.memory_manager import MemoryManager
 from supervision.Aegis.Aegis import AegisService
 from core.execution.interpretationvalidator import InterpretationValidator
-
+from cognition.Hecate.hecate import HecateService
+from services.internal.condition_evaluator import ConditionEvaluator
+from services.internal.plan_validator import PlanValidator
+from services.internal.execution_trace import ExecutionTrace
 
 
 
@@ -28,6 +31,14 @@ def main():
 
     # Crear servicio de IA
     ai_service = AIService()
+
+    # Crear servicio de hecate
+    hecate_service = HecateService()
+
+    condition_evaluator = ConditionEvaluator()
+    plan_validator = PlanValidator()
+    execution_trace = ExecutionTrace()
+
 
     # Crear procesador de resultados
     processor = ResultProcessor(ai_service)
@@ -57,7 +68,10 @@ def main():
         cronos_service,
         aegis_service,
         session_id,
-        interpretation_validator
+        interpretation_validator,
+        hecate_service,
+        condition_evaluator,
+        execution_trace
     )
 
     # Crear servicio de voz

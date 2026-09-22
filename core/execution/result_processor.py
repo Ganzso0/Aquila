@@ -1,5 +1,5 @@
 from core.models.result import AgentResult
-from core.models.request import AgentRequest
+from core.models.interpretation_result import InterpretationResult
 
 
 class ResultProcessor:
@@ -14,7 +14,7 @@ class ResultProcessor:
     def process(
         self,
         text: str,
-        request: AgentRequest,
+        interpretation: InterpretationResult,
         results: list[AgentResult],
         history: list[dict]
     ) -> str:
@@ -37,12 +37,12 @@ class ResultProcessor:
             return "No se pudo generar una respuesta."
 
         # =====================================
-        # Generar UNA respuesta con Zeus
+        # Generar UNA respuesta con Logos
         # =====================================
 
         return self._ai_service.generate_response(
             text,
-            request,
+            interpretation,
             valid_results,
             history
         )

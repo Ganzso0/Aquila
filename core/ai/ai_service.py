@@ -4,12 +4,12 @@ from core.models.result import AgentResult
 from core.models.request import AgentRequest
 from core.models.interpretation_result import InterpretationResult
 from pathlib import Path
-
+from core.models.interpretation_result import InterpretationResult
 
 
 class AIService:
 
-    def __init__(self, model: str = "qwen3:14b"):
+    def __init__(self, model: str = "granite4:3b"):
 
         self.model = model
         self.url = "http://localhost:11434/api/chat"
@@ -19,14 +19,14 @@ class AIService:
                     self.prompt = f.read()
 
     def interpret(
-        self,
-        text: str,
-        history: list[dict] | None = None,
-        request_history: list[dict] | None = None,
-        internal_mode: bool = False
+    self,
+    text: str,
+    history: list[dict] | None = None,
+    request_history: list[dict] | None = None,
+    internal_mode: bool = False
     ) -> InterpretationResult:
 
-
+        
         history = history or []
 
         history_text = ""
@@ -35,68 +35,63 @@ class AIService:
             role = "Usuario" if message["role"] == "user" else "Zeus"
             history_text += f"{role}: {message['content']}\n"
 
-
         request_history = request_history or []
 
         request_history_text = ""
 
         for request in request_history:
             request_history_text += (
-            f"[request_id={request['request_id']}] "
-            f"Usuario: {request['content']}\n"
+                f"[request_id={request['request_id']}] "
+                f"Usuario: {request['content']}\n"
             )
 
         internal_mode_text = ""
 
         if internal_mode:
             internal_mode_text = """
-        MODO INTERNO LACERTA: ACTIVADO
+            MODO INTERNO LACERTA: ACTIVADO
 
-        La petición pertenece al control interno de Lacerta.
+            La petición pertenece al control interno de Lacerta.
 
-        Debes utilizar obligatoriamente:
-        "intent": "lacerta"
+            Debes utilizar obligatoriamente:
+            "intent": "lacerta"
 
-        Interpreta la solicitud utilizando únicamente las acciones disponibles
-        para el intent "lacerta".
+            Interpreta la solicitud utilizando únicamente las acciones disponibles
+            para el intent "lacerta".
 
-        NO utilices "memory", "conversation", "system" ni ningún otro intent.
+            NO utilices "memory", "conversation", "system" ni ningún otro intent.
 
-        "LACERTA" es únicamente el activador del modo interno y no forma
-        parte de la petición que debes interpretar.
-        """
-
-            
-
+            "LACERTA" es únicamente el activador del modo interno y no forma
+            parte de la petición que debes interpretar.
+            """
 
         prompt = f"""
             {self.prompt}
 
             Historial de la conversación:
+        ```
 
-{history_text if history_text else "(No hay historial previo.)"}
+        {history_text if history_text else "(No hay historial previo.)"}
 
-Historial de peticiones:
+        Historial de peticiones:
 
-{request_history_text if request_history_text else "(No hay peticiones anteriores.)"}
+        {request_history_text if request_history_text else "(No hay peticiones anteriores.)"}
 
-IMPORTANTE SOBRE EL HISTORIAL:
+        IMPORTANTE SOBRE EL HISTORIAL:
 
-- El historial pertenece a la misma conversación.
-- Puedes utilizarlo para resolver referencias ambiguas.
-- Si el usuario omite información que ya fue indicada anteriormente,
-  recupera esa información del historial.
-- No inventes información que no aparezca ni en la petición actual
-  ni en el historial.
+        * El historial pertenece a la misma conversación.
+        * Puedes utilizarlo para resolver referencias ambiguas.
+        * Si el usuario omite información que ya fue indicada anteriormente,
+        recupera esa información del historial.
+        * No inventes información que no aparezca ni en la petición actual
+        ni en el historial.
 
-{internal_mode_text}
+        {internal_mode_text}
 
-Petición del usuario:
-{text}
-"""
-
-        print("¿Prompt tiene conversation?:", "INTENT: CONVERSATION" in self.prompt)
-
+        Petición del usuario:
+        {text}
+        """
+       
         response = requests.post(
             self.url,
             json={
@@ -112,11 +107,26 @@ Petición del usuario:
 
         data = response.json()
 
-        print("Tiempo total:", data.get("total_duration", 0) / 1_000_000_000)
-        print("Carga modelo:", data.get("load_duration", 0) / 1_000_000_000)
-        print("Evaluación prompt:", data.get("prompt_eval_duration", 0) / 1_000_000_000)
-        print("Generación:", data.get("eval_duration", 0) / 1_000_000_000)
-        print("Tokens generados:", data.get("eval_count", 0))
+        print(
+            "Tiempo total:",
+            data.get("total_duration", 0) / 1_000_000_000
+        )
+        print(
+            "Carga modelo:",
+            data.get("load_duration", 0) / 1_000_000_000
+        )
+        print(
+            "Evaluación prompt:",
+            data.get("prompt_eval_duration", 0) / 1_000_000_000
+        )
+        print(
+            "Generación:",
+            data.get("eval_duration", 0) / 1_000_000_000
+        )
+        print(
+            "Tokens generados:",
+            data.get("eval_count", 0)
+        )
 
         content = data["message"]["content"].strip()
 
@@ -138,38 +148,36 @@ Petición del usuario:
         print(content)
         print("--- END RAW RESPONSE ---\n")
 
-
-
         parsed = json.loads(content)
 
-        print("=== INTENCIÓN QWEN ===")
-        print("Intent:", repr(parsed.get("intent")))
-        print("Action:", repr(parsed.get("action")))
-        print("======================")
+        conversation = parsed.get("conversation", False)
+        planning_required = parsed.get("planning_required", False)
 
-        
-        if parsed.get("intent") == "lacerta":
+        print("=== INTERPRETACIÓN QWEN ===")
+        print("Conversation:", repr(conversation))
+        print("Planning required:", repr(planning_required))
+        print("Requests:", len(parsed.get("requests", [])))
+        print("===========================")
 
-            if parsed.get("action") == "status":
-                parsed["action"] = "agent_status"
+        # --------------------------------------------------
+        # Convertir cada request del JSON en un AgentRequest
+        # --------------------------------------------------
 
-                parameters = parsed.get("parameters", {})
+        parsed_request = []
 
-                if parameters.get("type") == "agents":
-                    parameters.pop("type")
+        for request_data in parsed.get("requests", []):
 
-                parsed["parameters"] = parameters
+            request = AgentRequest(
+                intent=request_data.get("intent"),
+                action=request_data.get("action"),
+                parameters=request_data.get("parameters", {}),
+                context=request_data.get("context", {}),
+            )
 
-        request = AgentRequest(
-            intent=parsed["intent"],
-            action=parsed["action"],
-            parameters=parsed.get("parameters", {}),
-            context=parsed.get("context", {}),
-            requests=parsed.get("requests", []),
-        )
+            parsed_request.append(request)
 
         return InterpretationResult(
-            request=request,
+            requests=parsed_request,
             raw_json=parsed,
             model=self.model,
             total_duration=data.get("total_duration", 0),
@@ -177,109 +185,158 @@ Petición del usuario:
             prompt_eval_duration=data.get("prompt_eval_duration", 0),
             eval_duration=data.get("eval_duration", 0),
             eval_count=data.get("eval_count", 0),
+            conversation=conversation,
+            planning_required=planning_required,
         )
 
     def generate_response(
-        self,
-        text: str,
-        request: AgentRequest,
-        results: list[AgentResult],
-        history: list[dict],
-    ) -> str:
+    self,
+    text: str,
+    interpretation: InterpretationResult,
+    results: list[AgentResult],
+    history: list[dict],
+) -> str:
 
         history_text = ""
 
         for message in history:
-            role = "Usuario" if message["role"] == "user" else "Zeus"
+            role = "Usuario" if message["role"] == "user" else "Logos"
 
-            history_text += f"{role}: {message['content']}\n"
+            history_text += (
+                f"{role}: {message['content']}\n"
+            )
+
+        # =====================================
+        # Interpretación completa
+        # =====================================
+
+        requests_text = ""
+
+        for i, request in enumerate(
+            interpretation.requests,
+            1
+        ):
+
+            requests_text += f"""
+    Petición {i}:
+
+    Intent:
+    {request.intent}
+
+    Action:
+    {request.action}
+
+    Parameters:
+    {json.dumps(
+        request.parameters,
+        ensure_ascii=False,
+        indent=2
+    )}
+
+    Context:
+    {json.dumps(
+        request.context,
+        ensure_ascii=False,
+        indent=2
+    )}
+    """
+
+        # =====================================
+        # Resultados
+        # =====================================
 
         results_text = ""
 
         for result in results:
+
             results_text += f"""
-        Agente: {result.agent_name}
-        Tipo: {result.type}
-        Mensaje: {result.message}
-        Datos: {json.dumps(result.data, ensure_ascii=False)}
-            """
+    Agente: {result.agent_name}
+    Tipo: {result.type}
+    Mensaje: {result.message}
+    Datos: {json.dumps(result.data, ensure_ascii=False)}
+    """
 
         prompt = f"""
-Eres Zeus, el orquestador de Lacerta.
+    Eres Logos, el componente conversacional de Lacerta.
 
-Tu función es convertir los resultados obtenidos
-por los agentes en una respuesta natural para el usuario.
+    Tu función es convertir los resultados obtenidos
+    por los agentes en una respuesta natural para el usuario.
 
-El agente ya ha ejecutado la acción.
-NO ejecutes ninguna acción.
-NO inventes información.
-NO expliques el proceso interno.
+    Los agentes ya han ejecutado las acciones.
+    NO ejecutes ninguna acción.
+    NO inventes información.
+    NO expliques el proceso interno.
 
-Debes responder ÚNICAMENTE a la petición
-original del usuario.
+    Debes responder ÚNICAMENTE a la petición
+    original del usuario.
 
-IMPORTANTE:
+    IMPORTANTE:
 
-- Utiliza únicamente los datos proporcionados por los agentes. 
-- Si hay varios resultados, combina la información. 
-- Responde a TODAS las peticiones del usuario. 
-- No ignores ninguna petición. 
-- No inventes datos. 
-- No inventes noticias. 
-- Si un agente no obtuvo resultados, dilo claramente. 
-- Puedes utilizar las URLs proporcionadas por los agentes. 
-- No ocultes las URLs. 
-- Responde en español. 
-- Sé natural y claro. 
-- No repitas información innecesariamente.
-- Sé conciso y directo.
-- No añadas explicaciones que el usuario no haya pedido.
-- Para noticias, muestra únicamente el titular, la fuente y la URL.
-- No resumas ni expliques las noticias salvo que el usuario lo solicite.
-- Para peticiones sencillas, responde brevemente.
-- Si hay varias peticiones, responde a todas sin extenderte innecesariamente.
+    - Utiliza únicamente los datos proporcionados por los agentes.
+    - Si hay varios resultados, combina la información.
+    - Responde a TODAS las peticiones del usuario.
+    - No ignores ninguna petición.
+    - No inventes datos.
+    - No inventes noticias.
+    - Si un agente no obtuvo resultados, dilo claramente.
+    - Puedes utilizar las URLs proporcionadas por los agentes.
+    - No ocultes las URLs.
+    - Responde en español.
+    - Sé natural y claro.
+    - No repitas información innecesariamente.
+    - Sé conciso y directo.
+    - No añadas explicaciones que el usuario no haya pedido.
+    - Para noticias, muestra únicamente el titular, la fuente y la URL.
+    - No resumas ni expliques las noticias salvo que el usuario lo solicite.
+    - Para peticiones sencillas, responde brevemente.
+    - Si hay varias peticiones, responde a todas sin extenderte innecesariamente.
 
-Historial de la conversación:
+    Historial de la conversación:
 
-El siguiente texto contiene mensajes anteriores de esta misma sesión.
-Utilízalo para mantener la continuidad de la conversación y recordar
-información que el usuario ya haya proporcionado.
+    El siguiente texto contiene mensajes anteriores de esta misma sesión.
+    Utilízalo para mantener la continuidad de la conversación y recordar
+    información que el usuario ya haya proporcionado.
 
-{history_text}
+    {history_text}
 
-Petición original del usuario:
+    Petición original del usuario:
 
-{text}
+    {text}
 
-Interpretación de Zeus:
+    Interpretación de Nous:
 
-Intent: {request.intent}
-Action: {request.action}
+    Conversation:
+    {interpretation.conversation}
 
-Parameters:
-{json.dumps(request.parameters, ensure_ascii=False, indent=2)}
+    Planning required:
+    {interpretation.planning_required}
 
-Context:
-{json.dumps(request.context, ensure_ascii=False, indent=2)}
+    Requests:
 
-Multiple requests:
-{json.dumps(request.requests, ensure_ascii=False, indent=2)}
+    {requests_text}
 
-Resultados de los agentes:
+    Resultados de los agentes:
 
-{results_text}
+    {results_text}
 
-Genera únicamente la respuesta que debería recibir el usuario.
-"""
+    Genera únicamente la respuesta que debería recibir el usuario.
+    """
 
         response = requests.post(
             self.url,
             json={
                 "model": self.model,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
                 "stream": False,
                 "think": False,
-                "options": {"num_predict": 500},
+                "options": {
+                    "num_predict": 500
+                },
             },
         )
 
@@ -287,17 +344,29 @@ Genera únicamente la respuesta que debería recibir el usuario.
 
         data = response.json()
 
-        print("Tiempo total respuesta:", data.get("total_duration", 0) / 1_000_000_000)
+        print(
+            "Tiempo total respuesta:",
+            data.get("total_duration", 0) / 1_000_000_000
+        )
 
-        print("Carga modelo respuesta:", data.get("load_duration", 0) / 1_000_000_000)
+        print(
+            "Carga modelo respuesta:",
+            data.get("load_duration", 0) / 1_000_000_000
+        )
 
         print(
             "Evaluación prompt respuesta:",
-            data.get("prompt_eval_duration", 0) / 1_000_000_000,
+            data.get("prompt_eval_duration", 0) / 1_000_000_000
         )
 
-        print("Generación respuesta:", data.get("eval_duration", 0) / 1_000_000_000)
+        print(
+            "Generación respuesta:",
+            data.get("eval_duration", 0) / 1_000_000_000
+        )
 
-        print("Tokens generados respuesta:", data.get("eval_count", 0))
+        print(
+            "Tokens generados respuesta:",
+            data.get("eval_count", 0)
+        )
 
         return data["message"]["content"].strip()

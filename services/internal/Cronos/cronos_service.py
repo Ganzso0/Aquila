@@ -12,60 +12,57 @@ class CronosService:
 
     def resolve(self, request: AgentRequest) -> AgentRequest:
 
-        # Resolver request principal
-        date_value = request.parameters.get("date")
-        time_value = request.parameters.get("time")
+        parameters = request.parameters
 
-        # Desplazamiento relativo:
-        # "in_2_hours" / "2_hours_ago"
+        date_value = parameters.get("date")
+        time_value = parameters.get("time")
+
+        # =====================================
+        # Tiempo relativo
+        # =====================================
+
         if self.is_relative_time(time_value):
 
-            resolved_datetime = self.resolve_relative_time(time_value)
+            resolved_datetime = self.resolve_relative_time(
+                time_value
+            )
 
-            request.parameters["date"] = (
+            parameters["date"] = (
                 resolved_datetime.date().isoformat()
             )
 
-            request.parameters["time"] = (
+            parameters["time"] = (
                 resolved_datetime.strftime("%H:%M:%S")
             )
 
-        else:
+            return request
 
-            request.parameters["date"] = self.resolve_date(date_value)
-            request.parameters["time"] = self.resolve_time(time_value)
+        # =====================================
+        # Fecha
+        # =====================================
 
-        # Resolver subrequests
-        for sub_request in request.requests:
+        if date_value is not None:
 
-            parameters = sub_request.get("parameters", {})
+            parameters["date"] = self.resolve_date(
+                date_value
+            )
 
-            sub_date = parameters.get("date")
-            sub_time = parameters.get("time")
+        # =====================================
+        # Hora
+        # =====================================
 
-            if self.is_relative_time(sub_time):
+        if time_value is not None:
 
-                resolved_datetime = self.resolve_relative_time(sub_time)
-
-                parameters["date"] = (
-                    resolved_datetime.date().isoformat()
-                )
-
-                parameters["time"] = (
-                    resolved_datetime.strftime("%H:%M:%S")
-                )
-
-            else:
-
-                if sub_date is not None:
-                    parameters["date"] = self.resolve_date(sub_date)
-
-                if sub_time is not None:
-                    parameters["time"] = self.resolve_time(sub_time)
+            parameters["time"] = self.resolve_time(
+                time_value
+            )
 
         return request
 
-    def resolve_date(self, date_value: str | None) -> str | None:
+    def resolve_date(
+        self,
+        date_value: str | None
+    ) -> str | None:
 
         if date_value is None:
             return None
@@ -76,17 +73,26 @@ class CronosService:
             return today.isoformat()
 
         if date_value == "tomorrow":
-            return (today + timedelta(days=1)).isoformat()
+            return (
+                today + timedelta(days=1)
+            ).isoformat()
 
         if date_value == "yesterday":
-            return (today - timedelta(days=1)).isoformat()
+            return (
+                today - timedelta(days=1)
+            ).isoformat()
 
         if date_value == "day_after_tomorrow":
-            return (today + timedelta(days=2)).isoformat()
+            return (
+                today + timedelta(days=2)
+            ).isoformat()
 
         return date_value
 
-    def resolve_time(self, time_value: str | None) -> str | None:
+    def resolve_time(
+        self,
+        time_value: str | None
+    ) -> str | None:
 
         if time_value is None:
             return None
@@ -96,25 +102,39 @@ class CronosService:
 
         return time_value
 
-    def is_relative_time(self, time_value: str | None) -> bool:
+    def is_relative_time(
+        self,
+        time_value: str | None
+    ) -> bool:
 
         if time_value is None:
             return False
 
         return (
-            (time_value.startswith("in_") and time_value.endswith("_hours"))
+            (
+                time_value.startswith("in_")
+                and time_value.endswith("_hours")
+            )
             or
             time_value.endswith("_hours_ago")
         )
 
-    def resolve_relative_time(self, time_value: str) -> datetime:
+    def resolve_relative_time(
+        self,
+        time_value: str
+    ) -> datetime:
 
         now = self.get_now()
 
-        if time_value.startswith("in_") and time_value.endswith("_hours"):
+        if (
+            time_value.startswith("in_")
+            and time_value.endswith("_hours")
+        ):
 
             hours = int(
-                time_value.removeprefix("in_").removesuffix("_hours")
+                time_value
+                .removeprefix("in_")
+                .removesuffix("_hours")
             )
 
             return now + timedelta(hours=hours)

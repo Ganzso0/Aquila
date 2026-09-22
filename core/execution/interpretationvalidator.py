@@ -1,3 +1,5 @@
+from core.models.request import AgentRequest
+
 class InterpretationValidator:
 
     VALID_ACTIONS = {
@@ -270,67 +272,85 @@ class InterpretationValidator:
 
         self._normalize(interpretation)
 
-        intent = interpretation.request.intent
-        action = interpretation.request.action
-        parameters = interpretation.request.parameters
-        context = interpretation.request.context
-        requests = interpretation.request.requests
-
         # =========================
-        # INTENT
+        # ROOT
         # =========================
 
-        if intent not in self.VALID_ACTIONS:
+        if not isinstance(interpretation.conversation, bool):
             return False
 
-        # =========================
-        # ACTION
-        # =========================
-
-        if action not in self.VALID_ACTIONS[intent]:
-            return False
-
-        # =========================
-        # PARAMETERS
-        # =========================
-
-        if not isinstance(parameters, dict):
-            return False
-
-        if not self._validate_parameters(
-            intent,
-            action,
-            parameters
-        ):
-            return False
-
-        # =========================
-        # CONTEXT
-        # =========================
-
-        if not self._validate_context(context):
+        if not isinstance(interpretation.planning_required, bool):
             return False
 
         # =========================
         # REQUESTS
         # =========================
 
+        requests = interpretation.requests
+
         if not isinstance(requests, list):
             return False
 
+        if not requests:
+            return False
+
+        # =========================
+        # VALIDAR CADA REQUEST
+        # =========================
+
         for request in requests:
 
-            if not self._validate_subrequest(request):
+            if not isinstance(request, AgentRequest):
                 return False
 
-        # =========================
-        # LACERTA
-        # =========================
+            intent = request.intent
+            action = request.action
+            parameters = request.parameters
+            context = request.context
 
-        if intent == "lacerta":
+            # =========================
+            # INTENT
+            # =========================
 
-            if "lacerta" not in text.lower():
+            if intent not in self.VALID_ACTIONS:
                 return False
+
+            # =========================
+            # ACTION
+            # =========================
+
+            if action not in self.VALID_ACTIONS[intent]:
+                return False
+
+            # =========================
+            # PARAMETERS
+            # =========================
+
+            if not isinstance(parameters, dict):
+                return False
+
+            if not self._validate_parameters(
+                intent,
+                action,
+                parameters
+            ):
+                return False
+
+            # =========================
+            # CONTEXT
+            # =========================
+
+            if not self._validate_context(context):
+                return False
+
+            # =========================
+            # LACERTA
+            # =========================
+
+            if intent == "lacerta":
+
+                if "lacerta" not in text.lower():
+                    return False
 
         return True
 
@@ -574,116 +594,27 @@ class InterpretationValidator:
 
         return True
 
-    # =========================================================
-    # SUBREQUEST
-    # =========================================================
-
-    def _validate_subrequest(self, request) -> bool:
-
-        if not isinstance(request, dict):
-            return False
-
-        required_fields = {
-            "intent",
-            "action",
-            "parameters",
-            "context"
-        }
-
-        if not required_fields.issubset(request.keys()):
-            return False
-
-        intent = request["intent"]
-        action = request["action"]
-        parameters = request["parameters"]
-        context = request["context"]
-
-        # =========================
-        # INTENT
-        # =========================
-
-        if intent not in self.VALID_ACTIONS:
-            return False
-
-        # =========================
-        # ACTION
-        # =========================
-
-        if action not in self.VALID_ACTIONS[intent]:
-            return False
-
-        # =========================
-        # PARAMETERS
-        # =========================
-
-        if not isinstance(parameters, dict):
-            return False
-
-        if not self._validate_parameters(
-            intent,
-            action,
-            parameters
-        ):
-            return False
-
-        # =========================
-        # CONTEXT
-        # =========================
-
-        if not self._validate_context(context):
-            return False
-
-        # =========================
-        # LACERTA
-        # =========================
-
-        if intent == "lacerta":
-
-            # El subrequest también tiene que venir
-            # de una petición que explícitamente active Lacerta.
-            #
-            # La validación del texto principal se hace
-            # en validate(), por lo que aquí no podemos
-            # comprobarlo directamente.
-            pass
-
-        return True
 
     def _normalize(self, interpretation):
 
-        request = interpretation.request
+        # =========================================================
+        # REQUESTS
+        # =========================================================
 
-        # =========================
-        # NEWS
-        # =========================
+        for request in interpretation.requests:
 
-        if request.intent == "news" and request.action == "search":
+            # =========================
+            # NEWS
+            # =========================
 
-            parameters = request.parameters
+            if request.intent == "news" and request.action == "search":
 
-            # topic → query
-            if "topic" in parameters and "query" not in parameters:
-                parameters["query"] = parameters.pop("topic")
+                parameters = request.parameters
 
-            # Defaults
-            parameters.setdefault("date", "today")
-            parameters.setdefault("category", "general")
-
-        # =========================
-        # SUBREQUESTS
-        # =========================
-
-        for subrequest in request.requests:
-
-            if (
-                subrequest.get("intent") == "news"
-                and subrequest.get("action") == "search"
-            ):
-
-                parameters = subrequest.get("parameters", {})
-
+                # topic → query
                 if "topic" in parameters and "query" not in parameters:
                     parameters["query"] = parameters.pop("topic")
 
+                # Defaults
                 parameters.setdefault("date", "today")
                 parameters.setdefault("category", "general")
