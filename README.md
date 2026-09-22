@@ -1,8 +1,8 @@
-Lacerta
+**Lacerta**
 
-Objetivo
+## Objetivo
 
-Lacerta es un asistente inteligente modular diseñado para coordinar agentes especializados y resolver tanto peticiones simples como tareas que requieren planificación.
+** Lacerta es un asistente inteligente modular diseñado para coordinar agentes especializados y resolver tanto peticiones simples como tareas que requieren planificación. **
 
 La arquitectura separa claramente:
 
@@ -48,7 +48,7 @@ Estado actual de Lacerta
 
 Lacerta dispone actualmente de un sistema funcional de interpretación, planificación y ejecución basado en un modelo local y agentes especializados.
 
-Actualmente puede:
+### Actualmente puede:
 
 Recibir peticiones por teclado.
 
@@ -88,10 +88,10 @@ Registrar un ExecutionTrace estructurado de cada ejecución.
 
 Persistir información de peticiones, interpretaciones y resultados relacionados con el dataset.
 
-El modelo utilizado actualmente es:
+Los modelos utilizados actualmente son:
 
-Qwen3 14B
-
+- Qwen3 14B
+- Granite
 ejecutado localmente mediante Ollama.
 
 También se han realizado pruebas con modelos más pequeños para las tareas cognitivas de Lacerta.
@@ -159,24 +159,24 @@ La arquitectura actual separa el modelo de IA de la lógica de ejecución.
                             ▼
                           Usuario
 
-Principio fundamental
+## Principio fundamental
 
-Lacerta piensa.
-Nous interpreta.
-Hécate planifica.
-Zeus ejecuta y coordina.
-Los agentes trabajan.
-Los servicios proporcionan capacidades.
-Logos comunica.
+- Lacerta piensa.
+- Nous interpreta.
+- Hécate planifica.
+- Zeus ejecuta y coordina.
+- Los agentes trabajan.
+- Los servicios proporcionan capacidades.
+- Logos comunica.
 
-Lacerta
+# ** Lacerta **
 
 Lacerta es el modelo de IA utilizado por el sistema.
 
 Su función no es ejecutar directamente acciones sobre el ordenador.
 
 El modelo puede utilizarse para distintas tareas cognitivas, separadas conceptualmente dentro de la arquitectura:
-
+```
 Lacerta
    │
    ├── Nous
@@ -187,10 +187,10 @@ Lacerta
    │
    └── Logos
          └── Conversación y respuesta
-
+```
 Esta separación permite que las diferentes funciones cognitivas evolucionen de manera independiente aunque puedan utilizar el mismo modelo.
 
-Nous
+# ** Nous **
 
 Nous es el Interpreter de Lacerta.
 
@@ -215,7 +215,7 @@ Determinar si la petición requiere planificación.
 Resolver el contexto necesario para representar la petición.
 
 El resultado de Nous utiliza una estructura similar a:
-
+```json
 {
   "planning_required": false,
   "requests": [
@@ -232,7 +232,7 @@ El resultado de Nous utiliza una estructura similar a:
     }
   ]
 }
-
+```
 planning_required
 
 planning_required indica a Zeus si la interpretación necesita pasar por Hécate.
@@ -261,7 +261,7 @@ En cambio:
 
 requiere planificación porque la segunda tarea depende del resultado de la primera.
 
-Hécate
+# ** Hécate **
 
 Hécate es el Planner de Lacerta.
 
@@ -306,7 +306,7 @@ Añade tareas que no estén presentes en la interpretación.
 Plan de ejecución
 
 Un plan puede tener una estructura como:
-
+```json
 {
   "tasks": [
     {
@@ -340,7 +340,7 @@ Un plan puede tener una estructura como:
     }
   ]
 }
-
+```
 Separación entre dependencia, condición y transferencia
 
 Hécate utiliza tres mecanismos diferentes:
@@ -356,7 +356,7 @@ input_mapping
 
 Esto permite representar flujos de ejecución sin que Hécate tenga que ejecutar ninguna acción.
 
-PlanValidator
+### PlanValidator
 
 PlanValidator valida los planes generados por Hécate antes de que Zeus los ejecute.
 
@@ -382,12 +382,12 @@ Estructura de input_mapping.
 
 De esta forma, el modelo propone un plan, pero Zeus no lo ejecuta directamente sin validarlo.
 
-ConditionEvaluator
+### ConditionEvaluator
 
 ConditionEvaluator es un servicio interno encargado de evaluar las condiciones de los planes.
 
 Actualmente soporta operadores como:
-
+```
 equals
 not_equals
 greater_than
@@ -398,7 +398,7 @@ contains
 not_contains
 exists
 not_exists
-
+```
 Por ejemplo:
 
 task_1.weather.temperature
@@ -407,11 +407,9 @@ less_than
 
 se resuelve utilizando el resultado real de task_1.
 
-Zeus
+# Zeus
 
 Zeus es el Orchestrator de Lacerta.
-
-Importante: Zeus ya no representa al modelo de IA.
 
 Zeus es código encargado de coordinar y ejecutar el sistema.
 
@@ -445,7 +443,7 @@ Registrar el ExecutionTrace.
 
 Zeus no contiene la lógica específica de meteorología, noticias o aplicaciones.
 
-Orchestrator
+# Orchestrator
 
 El Orchestrator es la implementación de Zeus.
 
@@ -458,7 +456,7 @@ Cuando:
 planning_required = false
 
 las peticiones independientes pueden ejecutarse en paralelo.
-
+```
 Nous
   ↓
 Zeus
@@ -466,7 +464,7 @@ Zeus
 ThreadPoolExecutor
   ├── Poseidon
   └── Hefesto
-
+```
 Ejecución planificada
 
 Cuando:
@@ -474,7 +472,7 @@ Cuando:
 planning_required = true
 
 el flujo es:
-
+```
 Nous
   ↓
 Hécate
@@ -488,8 +486,8 @@ Tarea 1
 Condición / dependencia
   ↓
 Tarea 2
-
-ExecutionTrace
+```
+## ExecutionTrace
 
 Cada ejecución de Zeus dispone de un ExecutionTrace.
 
@@ -505,7 +503,7 @@ RESULTS
 ¿Qué resultados produjo?
 
 El trace registra eventos estructurados como:
-
+```
 request_received
 history_loaded
 message_saved
@@ -549,28 +547,28 @@ dataset_label_saved
 response_saved
 
 execution_finished
-
+```
 En ejecuciones paralelas, el trace permite observar el orden real de los eventos producidos por los distintos hilos.
 
 Actualmente el trace se mantiene en memoria durante la ejecución. Su persistencia podrá incorporarse posteriormente.
 
-Aegis
+# Aegis
 
 Aegis es la capa de supervisión y ejecución de agentes.
 
 Zeus utiliza Aegis para ejecutar capacidades de los agentes registrados.
 
 Esto permite mantener separadas:
-
+```
 Zeus
     ↓
 Aegis
     ↓
 Agente
-
+```
 Aegis también permite gestionar el estado de los agentes del sistema.
 
-Cronos
+## Cronos
 
 Cronos es el servicio encargado de resolver referencias temporales antes de la ejecución.
 
@@ -584,14 +582,14 @@ en información que los agentes puedan utilizar.
 
 La resolución temporal ocurre antes de ejecutar las peticiones.
 
-Logos
+# ** Logos ** 
 
 Logos es la capa conversacional de Lacerta.
 
 Su responsabilidad es transformar la información producida por el sistema en una respuesta natural para el usuario.
 
 Conceptualmente:
-
+```
 Agentes
    ↓
 AgentResult
@@ -601,14 +599,14 @@ ResultProcessor
 Logos
    ↓
 Respuesta
-
+```
 Logos no debe ejecutar acciones ni decidir qué agentes utilizar.
 
 Su función es comunicar el resultado de la ejecución.
 
 La implementación y evolución de Logos constituye la siguiente fase principal del proyecto.
 
-AgentRequest
+## AgentRequest
 
 AgentRequest representa una petición estructurada dentro del sistema.
 
@@ -630,9 +628,9 @@ puede producir:
 weather → current
 system  → open_application
 
-Zeus decide posteriormente cómo ejecutar esas peticiones.
+** Zeus decide posteriormente cómo ejecutar esas peticiones. **
 
-Registry
+## Registry
 
 Registry contiene los agentes registrados en Lacerta.
 
@@ -640,15 +638,15 @@ Permite que Zeus no tenga que conocer directamente la implementación de cada ag
 
 Actualmente registra agentes como:
 
-Hermes
+  - Hermes
 
-Poseidon
+  - Poseidon
 
-Hefesto
+  - Hefesto
 
 El sistema está diseñado para permitir añadir nuevos agentes sin modificar la lógica central del Orchestrator.
 
-BaseAgent
+## BaseAgent
 
 Los agentes especializados heredan de BaseAgent.
 
@@ -659,9 +657,9 @@ Actualmente utilizan mecanismos como:
 can_handle()
 execute()
 
-Agentes
+# Agentes
 
-Hermes
+## Hermes
 
 Especializado en noticias.
 
@@ -679,7 +677,7 @@ Ejemplo:
 
 "¿Qué noticias hay sobre NVIDIA?"
 
-Poseidon
+## Poseidon
 
 Especializado en meteorología.
 
@@ -700,7 +698,7 @@ Ejemplos:
 
 "¿Qué tiempo hará mañana en Barcelona?"
 
-Hefesto
+## Hefesto
 
 Especializado en acciones sobre el ordenador.
 
@@ -718,34 +716,34 @@ system
 
 Acciones actuales:
 
-open_application
-close_application
+  - open_application
+  - close_application
 
 Hefesto utiliza servicios especializados y no necesita conocer directamente toda la lógica del catálogo de aplicaciones.
 
-AgentResult
+## AgentResult
 
 Todos los agentes devuelven un resultado común.
 
 Contiene información como:
 
-success
-agent_name
-type
-message
-data
-requires_llm
+  - success
+  - agent_name
+  - type
+  - message
+  - data
+  - requires_llm
 
 Esto permite que Zeus y las capas posteriores procesen resultados de agentes diferentes de forma uniforme.
 
-ResultProcessor
+## ResultProcessor
 
 ResultProcessor procesa los resultados obtenidos durante la ejecución.
 
 Su función es preparar los resultados para la generación de la respuesta.
 
 Por ejemplo:
-
+```
 Poseidon
    └── información meteorológica
 
@@ -763,16 +761,16 @@ Logos
         ↓
 
 respuesta final
-
+```
 Esto permite combinar información producida por varios agentes en una única respuesta.
 
-Servicios
+# Servicios
 
 Los servicios contienen la lógica reutilizable del sistema.
 
 Los agentes utilizan estos servicios en lugar de implementar directamente toda la lógica.
 
-WeatherService
+### WeatherService
 
 Responsabilidad:
 
@@ -782,12 +780,12 @@ Obtener datos meteorológicos.
 
 Actualmente puede producir información como:
 
-temperature
-wind_speed
-weather_code
-description
+  - temperature
+  - wind_speed
+  - weather_code
+  - description
 
-LocationService
+### LocationService
 
 Responsabilidad:
 
@@ -801,7 +799,7 @@ latitude
 longitude
 country
 
-NewsService
+### NewsService
 
 Responsabilidad:
 
@@ -809,21 +807,21 @@ Consultar noticias mediante GNews.
 
 Permite realizar búsquedas utilizando parámetros como:
 
-query
-date
-category
+  - query
+  - date
+  - category
 
 Los resultados pueden incluir:
 
-title
-description
-url
-source
-published
+  - title
+  - description
+  - url
+  - source
+  - published
 
 La API utilizada actualmente tiene limitaciones en el plan gratuito relacionadas con el retraso de determinadas noticias.
 
-ApplicationService
+### ApplicationService
 
 Responsabilidades:
 
@@ -841,7 +839,7 @@ cache/
     applications.json
 
 En el primer inicio:
-
+```
 escanea
    ↓
 genera catálogo
@@ -849,12 +847,12 @@ genera catálogo
 guarda catálogo
 
 En los siguientes:
-
+```
 carga catálogo
 
 El catálogo depende de cada ordenador y no debe subirse a Git.
 
-SystemService
+### SystemService
 
 Responsabilidad:
 
@@ -862,13 +860,13 @@ Ejecutar acciones del sistema.
 
 Actualmente:
 
-open_application(path)
+  - open_application(path)
 
 No busca aplicaciones.
 
 Recibe las rutas proporcionadas por la capa correspondiente y ejecuta la acción.
 
-MemoryManager
+### MemoryManager
 
 MemoryManager gestiona las operaciones internas relacionadas con la memoria.
 
@@ -876,26 +874,26 @@ Las peticiones de memoria no necesitan convertirse en agentes especializados.
 
 Actualmente el sistema dispone de almacenamiento persistente para elementos como:
 
-sesiones
+  - sesiones
 
-mensajes
+  - mensajes
 
-peticiones
+  - peticiones
 
-interpretaciones
+  - interpretaciones
 
-etiquetas del dataset
+  - etiquetas del dataset
 
-memoria
+### Memoria
 
 La memoria forma parte de la infraestructura interna de Lacerta y no de las capacidades especializadas de un agente externo.
 
-VoiceService
+### VoiceService
 
 Permite utilizar el micrófono como entrada.
 
 Actualmente:
-
+```
 escucha
    ↓
 Google Speech Recognition
@@ -903,21 +901,21 @@ Google Speech Recognition
 texto
    ↓
 Lacerta
-
+```
 Después el texto se envía al sistema de la misma forma que una petición escrita.
 
 La voz no modifica la arquitectura de ejecución.
 
 Solo modifica la entrada.
 
-Conversación
+### Conversación
 
 Las conversaciones normales no necesitan un agente especializado.
 
 Cuando la petición no requiere una capacidad ejecutable, Nous puede identificarla como conversación y Zeus evita buscar un agente.
 
 El flujo conceptual es:
-
+```
 Usuario
    ↓
 Nous
@@ -927,7 +925,7 @@ petición conversacional
 Logos
    ↓
 respuesta
-
+```
 Esto mantiene la conversación separada de las capacidades especializadas del sistema.
 
 Flujo de ejecución directa
@@ -941,7 +939,7 @@ Nous puede producir:
 planning_required = false
 
 Flujo:
-
+```
 Usuario
    ↓
 Lacerta
@@ -968,8 +966,9 @@ ResultProcessor
 Logos
    ↓
 Respuesta
+```
 
-Flujo de ejecución planificada
+## **Flujo de ejecución planificada**
 
 Ejemplo:
 
@@ -980,7 +979,7 @@ Nous detecta que existe una dependencia:
 planning_required = true
 
 Hécate genera un plan:
-
+```
 task_1
    ↓
 obtener temperatura
@@ -1024,8 +1023,8 @@ ResultProcessor
 Logos
    ↓
 Respuesta
-
-Catálogo de aplicaciones
+```
+## Catálogo de aplicaciones
 
 El catálogo es persistente y específico de cada ordenador.
 
@@ -1037,93 +1036,93 @@ Debe estar ignorado mediante .gitignore.
 
 Cosas pendientes
 
-Logos
+### Logos
 
-Completar la capa conversacional para separar completamente la generación de respuestas de la interpretación y la ejecución.
+  - Completar la capa conversacional para separar completamente la generación de respuestas de la interpretación y la ejecución.
 
-Hécate
+### Hécate
 
 Continuar ampliando la capacidad de planificación cuando sea necesario:
 
-dependencias más complejas
+  - dependencias más complejas
 
-transferencia de datos entre tareas
+  - transferencia de datos entre tareas
 
-flujos de ejecución más avanzados
+  - flujos de ejecución más avanzados
 
-validaciones adicionales
+  - validaciones adicionales
 
-ExecutionTrace
+### ExecutionTrace
 
 Actualmente el trace se mantiene en memoria.
 
 Más adelante podría persistirse en SQLite para permitir:
 
-auditoría de ejecuciones
+  - auditoría de ejecuciones
 
-depuración
+  - depuración
 
-análisis de rendimiento
+  - análisis de rendimiento(odin)
 
-supervisión
+  - supervisión
 
-reconstrucción de ejecuciones anteriores
+  - reconstrucción de ejecuciones anteriores
 
-Memoria
+### Memoria
 
 Continuar desarrollando la gestión de:
 
-preferencias
+  - preferencias
 
-contexto
+  - contexto
 
-recuerdos relevantes
+  - recuerdos relevantes
 
-historial
+  - historial
 
-recuperación de información
+  - recuperación de información
 
-Noticias
+### Noticias
 
 Mejorar:
 
-búsquedas
+  - búsquedas
 
-filtros
+  - filtros
 
-selección de resultados
+  - selección de resultados
 
-eliminación de duplicados
+  - eliminación de duplicados
 
-resumen
+  - resumen
 
-noticias históricas
+  - noticias históricas
 
-Meteorología
+### Meteorología
 
 Más adelante:
 
-mejorar previsiones
+  - mejorar previsiones
 
-soportar más tipos de consultas
+  - soportar más tipos de consultas
 
-mejorar interpretación de ubicaciones
+  - mejorar interpretación de ubicaciones
 
-añadir alertas meteorológicas
+  - añadir alertas meteorológicas
 
-Aplicaciones
+### Aplicaciones
 
 Mejorar ApplicationService mediante:
 
-alias
+  - alias
 
-búsqueda aproximada
+  - búsqueda aproximada
 
-puntuación
+  - puntuación
 
-búsqueda inteligente
+  - búsqueda inteligente
 
-detección de aplicaciones instaladas recientemente
+  - detección de aplicaciones instaladas recientemente
 
 Juegos
 
@@ -1131,27 +1130,27 @@ El menú Inicio no contiene necesariamente todos los juegos instalados.
 
 En el futuro podrían existir servicios especializados:
 
-SteamService
-EpicService
-BattleNetService
+  - SteamService
+  - EpicService
+  - BattleNetService
 
 en lugar de introducir toda esta lógica dentro de ApplicationService.
 
-Voz
+### Voz
 
 Actualmente existe entrada por voz.
 
 En el futuro:
-
+```
 "Lacerta"
    ↓
 activar escucha
    ↓
 "abre Steam"
-
+```
 mediante un sistema de palabra de activación.
 
-Objetivo a largo plazo
+(Objetivo a largo plazo)
 
 La arquitectura objetivo mantiene separadas las diferentes responsabilidades cognitivas y de ejecución:
 
@@ -1199,20 +1198,20 @@ La arquitectura objetivo mantiene separadas las diferentes responsabilidades cog
 
 El objetivo es que el modelo pueda evolucionar sin que la lógica de ejecución tenga que depender de él directamente.
 
-Principio fundamental
+# **Principio fundamental**
 
-Lacerta piensa.
+1- Lacerta piensa.
 
-Nous interpreta.
+2- Nous interpreta.
 
-Hécate planifica.
+3- Hécate planifica.
 
-Zeus coordina y ejecuta.
+4- Zeus coordina y ejecuta.
 
-Los agentes trabajan.
+5- Los agentes trabajan.
 
-Los servicios proporcionan capacidades.
+6- Los servicios proporcionan capacidades.
 
-Logos comunica.
+7- Logos comunica.
 
-Cada capa debe tener una responsabilidad clara y evitar asumir responsabilidades pertenecientes a otra capa.
+## Cada capa debe tener una responsabilidad clara y evitar asumir responsabilidades pertenecientes a otra capa.
