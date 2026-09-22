@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-** Lacerta es un asistente inteligente modular diseñado para coordinar agentes especializados y resolver tanto peticiones simples como tareas que requieren planificación. **
+**Lacerta es un asistente inteligente modular diseñado para coordinar agentes especializados y resolver tanto peticiones simples como tareas que requieren planificación.**
 
 La arquitectura separa claramente:
 
@@ -169,7 +169,7 @@ La arquitectura actual separa el modelo de IA de la lógica de ejecución.
 - Los servicios proporcionan capacidades.
 - Logos comunica.
 
-# ** Lacerta **
+# **Lacerta**
 
 Lacerta es el modelo de IA utilizado por el sistema.
 
@@ -190,7 +190,7 @@ Lacerta
 ```
 Esta separación permite que las diferentes funciones cognitivas evolucionen de manera independiente aunque puedan utilizar el mismo modelo.
 
-# ** Nous **
+# **Nous**
 
 Nous es el Interpreter de Lacerta.
 
@@ -261,7 +261,7 @@ En cambio:
 
 requiere planificación porque la segunda tarea depende del resultado de la primera.
 
-# ** Hécate **
+# **Hécate**
 
 Hécate es el Planner de Lacerta.
 
@@ -582,7 +582,7 @@ en información que los agentes puedan utilizar.
 
 La resolución temporal ocurre antes de ejecutar las peticiones.
 
-# ** Logos ** 
+# **Logos** 
 
 Logos es la capa conversacional de Lacerta.
 
@@ -628,7 +628,7 @@ puede producir:
 weather → current
 system  → open_application
 
-** Zeus decide posteriormente cómo ejecutar esas peticiones. **
+**Zeus decide posteriormente cómo ejecutar esas peticiones.**
 
 ## Registry
 
