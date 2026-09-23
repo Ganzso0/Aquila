@@ -3,10 +3,6 @@ from core.models.request import AgentRequest
 class InterpretationValidator:
 
     VALID_ACTIONS = {
-        "conversation": {
-            "chat"
-        },
-
         "weather": {
             "current",
             "forecast"
@@ -52,13 +48,6 @@ class InterpretationValidator:
 
     ALLOWED_PARAMETERS = {
 
-        # =====================================
-        # CONVERSATION
-        # =====================================
-
-        "conversation": {
-            "chat": set()
-        },
 
         # =====================================
         # WEATHER
@@ -292,7 +281,7 @@ class InterpretationValidator:
             return False
 
         if not requests:
-            return False
+            return True
 
         # =========================
         # VALIDAR CADA REQUEST

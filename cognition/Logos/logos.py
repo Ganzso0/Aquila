@@ -11,9 +11,9 @@ class LogosService:
 
     def __init__(
         self,
-        prompt_path: str = "prompts/logos_prompt.txt",
+        prompt_path = Path(__file__).parent / "logos_prompt.txt",
         url: str = "http://localhost:11434/api/chat",
-        model: str = "qwen3:14b",
+        model: str = "granite4:3b",
     ):
         self.url = url
         self.model = model

@@ -13,6 +13,7 @@ from cognition.Hecate.hecate import HecateService
 from services.internal.condition_evaluator import ConditionEvaluator
 from services.internal.plan_validator import PlanValidator
 from services.internal.execution_trace import ExecutionTrace
+from cognition.Logos.logos import LogosService
 
 
 
@@ -32,13 +33,15 @@ def main():
     # Crear servicio de IA
     ai_service = AIService()
 
-    # Crear servicio de hecate
+    # Crear servicio de Hecate
     hecate_service = HecateService()
 
     condition_evaluator = ConditionEvaluator()
     plan_validator = PlanValidator()
-    execution_trace = ExecutionTrace()
 
+    # Crear servicio de Logos
+    logos_service = LogosService()
+    
 
     # Crear procesador de resultados
     processor = ResultProcessor(ai_service)
@@ -71,7 +74,8 @@ def main():
         interpretation_validator,
         hecate_service,
         condition_evaluator,
-        plan_validator
+        plan_validator,
+        logos_service
 
     )
 

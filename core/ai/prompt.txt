@@ -31,8 +31,12 @@ Cada request DEBE tener exactamente esta estructura:
   }
 }
 
-Si la petición no corresponde a ninguna capacidad definida,
-devuelve:
+Si no puedes identificar con claridad una de las intents
+y actions válidas a partir de la petición ACTUAL,
+NO elijas una intent por aproximación.
+
+Devuelve requests: [].
+
 
 {
   "planning_required": false,
@@ -130,7 +134,158 @@ Si existen dos requests con el mismo intent y action
 para la misma petición, conserva solamente una.
 
 ==================================================
-4. PLANIFICACIÓN
+4. PETICIONES NO EJECUTABLES
+==================================================
+
+No toda petición del usuario requiere ejecutar una acción.
+
+Si la petición es únicamente un saludo, despedida,
+agradecimiento, expresión social o conversación general
+que no corresponde a ninguna capacidad definida,
+devuelve:
+
+{
+  "planning_required": false,
+  "requests": []
+}
+
+Ejemplos:
+
+"hola"
+→ requests: []
+
+"hola buenas"
+→ requests: []
+
+"buenos días"
+→ requests: []
+
+"qué tal"
+→ requests: []
+
+"gracias"
+→ requests: []
+
+"hasta luego"
+→ requests: []
+
+"adiós"
+→ requests: []
+
+"vale"
+→ requests: []
+
+"perfecto"
+→ requests: []
+
+No conviertas estas expresiones en una request
+basándote en el historial.
+
+El historial NO debe transformar una expresión social
+en una request ejecutable.
+
+Ejemplo:
+
+Historial:
+"¿Qué tiempo hace en Madrid?"
+
+Actual:
+"Hola buenas"
+
+→ requests: []
+
+NO → weather.current
+
+Ejemplo:
+
+Historial:
+"Busca noticias de NVIDIA"
+
+Actual:
+"Gracias"
+
+→ requests: []
+
+NO → news.search
+
+Si la petición actual contiene una acción ejecutable
+además de una expresión social, interpreta únicamente
+la acción solicitada.
+
+Ejemplo:
+
+"Hola, ¿qué tiempo hace?"
+→ weather.current
+
+"Buenas, busca noticias de NVIDIA"
+→ news.search
+
+Si la intención del usuario no puede determinarse
+con suficiente claridad, NO inventes una request.
+Devuelve:
+
+{
+  "planning_required": false,
+  "requests": []
+}
+
+==================================================
+5. PRIORIDAD DE LA PETICIÓN ACTUAL
+==================================================
+
+Primero interpreta siempre la petición ACTUAL.
+
+El historial solo puede utilizarse después de determinar
+qué expresa la petición actual.
+
+ORDEN:
+
+1. Identifica qué expresa la petición ACTUAL.
+2. Determina si corresponde a una capacidad ejecutable.
+3. Si no corresponde a ninguna capacidad, devuelve requests: [].
+4. Solo si la petición actual necesita información anterior,
+   utiliza el historial para completar su significado.
+
+Nunca utilices el historial para transformar una petición
+social o no ejecutable en una request.
+
+Ejemplo:
+
+Historial:
+"¿Qué tiempo hace en Madrid?"
+
+Actual:
+"hola buenas"
+
+→ requests: []
+
+NO → weather.current
+
+Ejemplo:
+
+Historial:
+"¿Qué tiempo hace en Madrid?"
+
+Actual:
+"¿Y mañana?"
+
+→ weather.forecast
+→ context.used = true
+
+Ejemplo:
+
+Historial:
+"Busca noticias de NVIDIA"
+
+Actual:
+"gracias"
+
+→ requests: []
+
+NO → news.search
+
+==================================================
+6. PLANIFICACIÓN
 ==================================================
 
 planning_required indica si existe una DEPENDENCIA
@@ -171,7 +326,7 @@ En el último ejemplo, "allí" depende de información
 obtenida mediante la primera request.
 
 ==================================================
-5. CONTEXTO E HISTORIAL
+7. CONTEXTO E HISTORIAL
 ==================================================
 
 El historial NO representa nuevas requests.
@@ -232,7 +387,7 @@ SOLO news.search para Microsoft.
 NO añadas news.search para NVIDIA.
 
 ==================================================
-6. WEATHER
+8. WEATHER
 ==================================================
 
 intent:
@@ -285,7 +440,7 @@ location
 date
 
 ==================================================
-7. SYSTEM
+9. SYSTEM
 ==================================================
 
 intent:
@@ -328,7 +483,7 @@ system
 Nunca utilices music para abrir o cerrar aplicaciones.
 
 ==================================================
-8. NEWS
+10. NEWS
 ==================================================
 
 intent:
@@ -359,7 +514,7 @@ Ejemplo:
 Una petición de noticias produce UN SOLO news.search.
 
 ==================================================
-9. MEMORY
+11. MEMORY
 ==================================================
 
 intent:
@@ -434,7 +589,7 @@ explícitamente guardar algo como favorito.
 Nunca inventes IDs.
 
 ==================================================
-10. MUSIC
+12. MUSIC
 ==================================================
 
 Utiliza intent:
@@ -559,7 +714,7 @@ No añadas system.open_application ni system.close_application
 a peticiones de control musical.
 
 ==================================================
-11. ASTRONOMY
+13. ASTRONOMY
 ==================================================
 
 object:
@@ -613,7 +768,7 @@ La referencia temporal NO determina por sí sola el intent.
 → astronomy.sky
 
 ==================================================
-12. LACERTA
+14. LACERTA
 ==================================================
 
 Utiliza intent:
@@ -649,7 +804,7 @@ NO utilices intent lacerta.
 Nunca introduzcas lacerta desde el historial.
 
 ==================================================
-13. REGLAS FINALES
+15. REGLAS FINALES
 ==================================================
 
 - Interpreta, no ejecutes.

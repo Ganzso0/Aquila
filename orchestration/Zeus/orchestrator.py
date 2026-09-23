@@ -12,6 +12,7 @@ from cognition.Hecate.hecate import HecateService
 from services.internal.condition_evaluator import ConditionEvaluator
 from services.internal.plan_validator import PlanValidator
 from services.internal.execution_trace import ExecutionTrace
+from cognition.Logos.logos import LogosService
 
 
 class Orchestrator:
@@ -35,7 +36,8 @@ class Orchestrator:
         interpretation_validator: InterpretationValidator,
         hecate_service: HecateService,
         condition_evaluator: ConditionEvaluator,
-        plan_validator: PlanValidator
+        plan_validator: PlanValidator,
+        logos_service: LogosService
         
 
     ):
@@ -52,6 +54,7 @@ class Orchestrator:
         self._hecate_service = hecate_service
         self._condition_evaluator = condition_evaluator
         self._plan_validator = plan_validator
+        self._logos_service = logos_service
         
 
     def handle(self, text: str) -> str:
@@ -59,9 +62,9 @@ class Orchestrator:
         trace = ExecutionTrace()
 
         trace.add(
-                "request_received",
-                text=text
-            )
+            "request_received",
+            text=text
+        )
 
         # =====================================
         # Recuperar historial anterior
@@ -78,10 +81,10 @@ class Orchestrator:
         )
 
         trace.add(
-    "history_loaded",
-    messages=len(history_for_interpretation),
-    requests=len(request_history)
-)
+            "history_loaded",
+            messages=len(history_for_interpretation),
+            requests=len(request_history)
+        )
 
         # =====================================
         # Guardar petición del usuario
@@ -93,7 +96,6 @@ class Orchestrator:
             text
         )
 
-
         trace.add("message_saved")
 
         # =====================================
@@ -103,7 +105,7 @@ class Orchestrator:
         internal_mode = "lacerta" in text.lower()
 
         trace.add(
-        "interpretation_started"
+            "interpretation_started"
         )
 
         interpretation = self._ai_service.interpret(
@@ -114,9 +116,9 @@ class Orchestrator:
         )
 
         trace.add(
-        "interpretation_completed",
-        planning_required=interpretation.planning_required,
-        requests=len(interpretation.requests)
+            "interpretation_completed",
+            planning_required=interpretation.planning_required,
+            requests=len(interpretation.requests)
         )
 
         # =====================================
@@ -124,7 +126,7 @@ class Orchestrator:
         # =====================================
 
         trace.add(
-        "interpretation_validation_started"
+            "interpretation_validation_started"
         )
 
         if not self._interpretation_validator.validate(
@@ -162,10 +164,11 @@ class Orchestrator:
             text,
             context_request_id
         )
+
         trace.add(
-    "request_saved",
-    request_id=request_id
-)
+            "request_saved",
+            request_id=request_id
+        )
 
         interpretation_id = self._memory_service.save_interpretation(
             request_id,
@@ -173,9 +176,9 @@ class Orchestrator:
         )
 
         trace.add(
-    "interpretation_saved",
-    interpretation_id=interpretation_id
-)
+            "interpretation_saved",
+            interpretation_id=interpretation_id
+        )
 
         # =====================================
         # Mostrar interpretación
@@ -240,9 +243,9 @@ class Orchestrator:
         # =====================================
 
         trace.add(
-    "temporal_resolution_started",
-    requests=len(requests_to_execute)
-)
+            "temporal_resolution_started",
+            requests=len(requests_to_execute)
+        )
 
         requests_to_execute = [
             self._cronos_service.resolve(request)
@@ -250,22 +253,23 @@ class Orchestrator:
         ]
 
         trace.add(
-    "temporal_resolution_completed",
-    requests=len(requests_to_execute)
-)
+            "temporal_resolution_completed",
+            requests=len(requests_to_execute)
+        )
 
         # =====================================
         # Ejecutar peticiones
         # =====================================
 
         trace.add(
-    "execution_started",
-    planning_required=interpretation.planning_required
-)
+            "execution_started",
+            planning_required=interpretation.planning_required
+        )
+
         trace.add(
-    "execution_requests_prepared",
-    requests=len(requests_to_execute)
-)
+            "execution_requests_prepared",
+            requests=len(requests_to_execute)
+        )
 
         if interpretation.planning_required:
 
@@ -304,9 +308,9 @@ class Orchestrator:
         else:
 
             trace.add(
-        "parallel_execution_started",
-        requests=len(requests_to_execute)
-    )
+                "parallel_execution_started",
+                requests=len(requests_to_execute)
+            )
 
             # Peticiones independientes → ejecución paralela
             results = self._execute_requests_parallel(
@@ -315,9 +319,22 @@ class Orchestrator:
             )
 
             trace.add(
-        "parallel_execution_completed",
-        results=len(results)
-    )
+                "parallel_execution_completed",
+                results=len(results)
+            )
+
+        # =====================================
+        # Ejecución completada
+        # =====================================
+
+        trace.add(
+            "execution_completed",
+            results=len(results)
+        )
+
+        # =====================================
+        # Recuperar historial para Logos
+        # =====================================
 
         history = (
             self._memory_service
@@ -325,58 +342,19 @@ class Orchestrator:
         )
 
         # =====================================
-        # Conversación
+        # Generar respuesta con Logos
         # =====================================
-
-        trace.add(
-    "execution_completed",
-    results=len(results)
-)
-
-        if (
-            not results
-            and interpretation.conversation
-        ):
-
-            response = self._ai_service.generate_response(
-                text,
-                interpretation,
-                [],
-                history
-            )
-
-            self._memory_service.save_dataset_label(
-                interpretation_id,
-                [],
-                response
-            )
-
-            self._memory_service.save_message(
-                self._session_id,
-                "assistant",
-                response
-            )
-
-            return response
-
-        # =====================================
-        # Procesar resultados
-        # =====================================
-
-        # Compatibilidad temporal:
-        # ResultProcessor todavía trabaja con
-        # una AgentRequest individual.
 
         trace.add(
             "response_generation_started",
             results=len(results)
         )
 
-        response = self._result_processor.process(
-            text,
-            interpretation,
-            results,
-            history
+        response = self._logos_service.generate_response(
+            text=text,
+            interpretation=interpretation,
+            results=results,
+            history=history
         )
 
         trace.add(
@@ -428,10 +406,14 @@ class Orchestrator:
 
         trace.add("response_saved")
 
+        # =====================================
+        # Finalizar ejecución
+        # =====================================
+
         trace.add(
-    "execution_finished",
-    results=len(results)
-)
+            "execution_finished",
+            results=len(results)
+        )
 
         print("\n=== EXECUTION TRACE ===")
 
