@@ -71,7 +71,8 @@ def main():
         interpretation_validator,
         hecate_service,
         condition_evaluator,
-        execution_trace
+        plan_validator
+
     )
 
     # Crear servicio de voz
