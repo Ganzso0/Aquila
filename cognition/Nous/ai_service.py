@@ -9,7 +9,7 @@ from core.models.interpretation_result import InterpretationResult
 
 class AIService:
 
-    def __init__(self, model: str = "ministral-3:8b "):
+    def __init__(self, model: str = "ministral-3:8b"):
 
         self.model = model
         self.url = "http://localhost:11434/api/chat"

@@ -3,7 +3,7 @@ from orchestration.Zeus.orchestrator import Orchestrator
 from core.execution.loader import load_agents
 from core.execution.result_processor import ResultProcessor
 # from services.voice_service import VoiceService
-from core.ai.ai_service import AIService
+from cognition.Nous.ai_service import AIService
 from services.internal.memory.memory_service import MemoryService
 from services.internal.Cronos.cronos_service import CronosService
 from services.internal.memory.memory_manager import MemoryManager
